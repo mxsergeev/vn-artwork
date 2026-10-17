@@ -13,7 +13,7 @@
 | [13–17 — remaining expression animations](experiments/build_remaining_animations.py) | Five expression-specific blink/speech builds with separate masks and source-state reuse |
 | [Static-expression pipeline](static/vn_expression_transplant.py) | Separate, **proven** method for eight non-animated expressions; larger face masks are appropriate *only* there |
 
-Read the relevant ~build.py~ and short experiment README before editing. **Copy the approach, never another expression's mask coordinates.** Historical attempts and failures: [HISTORY.md](HISTORY.md).
+Read the relevant ~build.py~ and short experiment README before editing. **Copy the approach, never another expression's mask coordinates. Every expression requires its own independently traced, tuned, and visually verified masks; a shared or fallback mask is unacceptable.** Historical attempts and failures: [HISTORY.md](HISTORY.md).
 
 ## 1. Set up and inspect
 
@@ -32,7 +32,7 @@ Reviewed, published states are stored under `static/animation/{neutral,happy,sho
 
 Sources: `static/sprites/01_neutral_worried.png` through `08_strained_smile.png`, all 1086×1448 RGBA. **Never overwrite these sources.** Reuse an original sprite for any state it already represents: Neutral, Pouty, and Sad `idle.png`; Angry, Embarrassed, and Strained Smile `talking.png`; Shocked `idle.png`; and Happy `blink_talking.png` (closed eyes with the original open smile). Experiments 13–17 document the mouth-state choice and expression-specific masks for the remaining five expressions.
 
-For each feature, inspect **source sprite, candidate donor, existing result, and reference masks** at native size and 4–8×. Determine the exact source features to remove, desired donor features to retain, and hair strands crossing the edit.
+For each feature, inspect **source sprite, candidate donor, existing result, and reference masks** at native size and at progressively higher magnifications (**5×, 10×, 15×, 20×, or higher as needed**). Determine the exact source features to remove, desired donor features to retain, and hair strands crossing the edit.
 
 ## 2. Generate a donor using the actual original image
 
@@ -61,6 +61,8 @@ If only a small donor region is needed, store a lossless crop **with its origina
 
 **Central rule: the smallest mask that COMPLETELY replaces the necessary feature — not the smallest mask possible.** A broad mask imports AI-redrawn cheek/skin/hair and creates color patches. An undersized mask cuts lashes or leaves old iris/eyelid remnants.
 
+**Mandatory: trace a DIFFERENT mask for EACH expression.** Neutral, Happy, Shocked, Pouty, Angry, Embarrassed, Sad, and Strained Smile must each have their **own individually defined and fine-tuned eye masks** (left and right separately), plus their own mouth mask where mouth transplantation is needed. Trace each mask against **that expression's exact source and donor pixels**; do not reuse, copy, alias, or silently fall back to masks/coordinates from another expression. When a donor or target state changes the required geometry, tune that contour for the specific feature/state as well. Shared mask-generation *code* is fine; shared mask *shapes* are not. A mask is not valid because the script runs: it must pass visual testing on its own expression.
+
 **Eyes:**
 - Trace independent **left and right** polygon contours against the actual original/donor pixels. Include *all* source iris/lash/eyelid pixels that must disappear and the complete donor eye/lash geometry. Don't start with a guessed ellipse.
 - Set **upper and lower boundaries separately**. Trim the lower contour especially carefully: keep original under-eye shading and cheek skin wherever possible.
@@ -73,12 +75,12 @@ If only a small donor region is needed, store a lossless crop **with its origina
 
 ## 4. Systematic iteration — required, not optional
 
-1. Make a **candidate mask overlay on the source**, alongside source, donor, and current/previous frame. Check every eye/lash and hair intersection.
-2. Transplant; save a real rendered full sprite and **4–8× eye/mouth crops**. Open and examine them — do not assess the result from code or QA numbers alone.
-3. Produce and inspect the **changed-pixel boundary** overlay. A wide halo beneath an eye or along hair often means excess replacement.
-4. Compare **at least a few meaningful variants** when defects remain (e.g. thinner lower-right contour vs fuller upper lash vs separate lash-tip extension). Change one cause at a time; compare the actual images side by side. Don't blindly shrink every polygon.
-5. Inspect blink/talk/**combined** animations and individual frames at normal scale and on light/dark backgrounds. Look for eye or mouth shifts, color flicker, hair loss, eyelash clipping, leftover source eyes, unnatural bags, and expression mismatch.
-6. Record the concrete defect and refine its specific mask, donor alignment, or local color. Inspect again after every change. Only stop when no obvious visual issues remain and additional automated iterations give negligible gains, or a clearly documented technical limitation blocks them. Suggest manual Krita work **only after** genuine automated iteration reaches that limit.
+1. **Trace and review separate left-eye, right-eye, and mouth mask overlays for each expression** against that expression's source **and** donor. Mark the actual eyelid, iris, lashes, hair boundaries, and mouth outline; never guess a contour from another expression. Check that source features are entirely removed and donor features entirely included without importing hair or unwanted skin.
+2. Transplant; save real rendered full sprites and fixed-coordinate eye/mouth crops. **Zoom to 5×, then 10×, 15×, 20× (and higher if needed)** until even one-pixel errors are visible. Inspect *both* eyes independently, including lash tips, inner/outer corners, eyelid edges, and overlapping hair. Do not judge from thumbnails, code, or QA numbers alone.
+3. Inspect the **mask edges and changed-pixel boundaries** at those same zoom levels on light **and** dark backgrounds. Reject any hair/skin bleed or warping, color seams, leftover eye parts, cutoff lashes, cropped lids, and oversized donor patches. An overly tight mask and an overly broad mask are **both failures**.
+4. Compare meaningful contour, donor-position, or color variants for **that particular expression**. Change one cause at a time. Do not blindly shrink polygons: enlarge or reshape where eyelashes, lids, or mouths are clipped; tighten or subtract where hair/skin is being replaced. Repeat until the actual pixels are clean.
+5. **Inspect all four PNG states and blink, talk, and combined GIFs for each expression.** Play each GIF normally, then compare/cycle frames and fixed-coordinate crops at **5×–20× or higher** to catch eye/mouth jumps, mismatched placement between states, residual closed mouths under open-mouth donors, color flicker, and any frame-specific distortion. Correct alignment in the PNGs, not by hiding problems with intermediate frames.
+6. After **every adjustment**, rebuild and recheck that expression's masks, four states, and GIFs. Do not treat other expressions passing QA as evidence this one passes. **Do not declare an expression complete or publish it while any visible warping, jank, misalignment, clipping/cropping, or hair/skin spill remains.** If a specific artifact cannot be corrected automatically, identify the exact expression, feature, and remaining pixels as a documented limitation; never label it visually approved. Suggest manual Krita work only after genuine automated iteration reaches that limit.
 
 **Case study:** experiment 10 improved the Neutral left eyelash using its own small extension and preserved under-eye skin. Applying that *method*, with newly drawn polygons, to experiment 11 improved Happy using **the same donor as 09**. The latest under-eye refinement changes **1,384** eye pixels, down from **1,860** (~26% fewer); this is corroborating evidence of a narrower edit, **not** a target metric or proof of quality. Visual comparison remains decisive.
 
@@ -87,7 +89,7 @@ If only a small donor region is needed, store a lossless crop **with its origina
 - **Mechanical QA:** same dimensions, original alpha exactly preserved, changes confined to intentional feature regions, untouched hair/body pixel-identical; run the relevant ~build.py~ assertions.
 - For experiments 13–17, run `python experiments/verify_remaining_animations.py` after copying the reviewed output files into `static/animation/`.
 - Regenerate and validate the large published GIFs with `python experiments/build_animation_previews.py` and `python experiments/verify_remaining_animations.py`.
-- **Visual QA (decisive):** source vs result at normal size and 4–8×, mask and changed-boundary overlays, light/dark backgrounds, all animation states and GIF playback. Mechanical QA alone cannot detect a *bad mask*.
+- **Visual QA (decisive, per expression):** separately traced left/right eye (and applicable mouth) masks; source vs donor vs result at normal size and **5×, 10×, 15×, 20× or higher**; mask and changed-boundary overlays; light/dark backgrounds; **all four PNG states plus blink/talk/combined GIF playback and frame-by-frame comparisons**. Explicitly verify no warping, unwanted hair/skin changes, mask spill, lash/eyelid/mouth cropping, leftover closed mouth, or state-to-state misalignment. Mechanical QA alone cannot detect a *bad mask*; **each expression must pass independently before publication**.
 - **Preserve all four states** as applicable: eyes open/closed × mouth open/closed. For Happy, the original closed-eye/open-mouth combination needs no synthetic replacement.
 - **Be precise about status:** distinguish a promising result from a visually reviewed one and from user approval. If an artifact remains, say exactly where and why.
 - **Project hygiene:** track the reviewed final PNG states, supported GIF previews, and compact index preview under `static/animation/`. Keep generated experiment `output/` frames, GIFs, masks, and QA ignored by ~.gitignore~; publish only the selected reviewed copies. Commit source scripts, essential cropped donors, and concise experiment notes as needed. No throwaway test images, duplicate full-body donors, extra instructions, or ZIP bundles in the repository.
