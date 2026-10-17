@@ -6,6 +6,7 @@
 
 | Study first | What to learn |
 |---|---|
+| [12 — Shocked blink and speech](experiments/12_shocked_animation/build.py) · [preview](experiments/12_shocked_animation/preview.jpg) | Source-referenced eye and mouth donors, tight masks, alpha-preserving frames, and reviewed GIFs |
 | [11 — refined Happy eyes](experiments/11_happy_eye_refined/build.py) · [preview](experiments/11_happy_eye_refined/preview.jpg) | **Best Happy eye result**: redraw per-eye masks, preserve under-eye skin, extend only the needed lash tip, protect outer-right hair |
 | [10 — refined Neutral blink](experiments/10_neutral_blink_refined/build.py) · [preview](experiments/10_neutral_blink_refined/preview.jpg) | The cleanup technique that fixed lash cutoff and pale under-eye patches |
 | [09 — natural Happy mouth](experiments/09_happy_imagen_mouth/build.py) · [preview](experiments/09_happy_imagen_mouth/preview.jpg) | Transplant an **image-generated** closed-smile donor instead of deforming the original mouth |
@@ -20,6 +21,7 @@ pip install -r requirements.txt
 python static/verify.py
 python experiments/10_neutral_blink_refined/build.py
 python experiments/11_happy_eye_refined/build.py
+python experiments/12_shocked_animation/build.py
 # New experiment output/ directories are generated locally and ignored by Git.
 ```
 
