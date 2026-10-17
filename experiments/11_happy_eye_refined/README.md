@@ -5,3 +5,7 @@
 Mouth behavior is unchanged from experiment 09: AI-edited natural closed smile at idle, original open Happy mouth while speaking. This script references the shared eye donor from experiment 05 and the **small, source-anchored mouth patch** from experiment 09, rather than duplicating full-body PNGs.
 
 Run: `python experiments/11_happy_eye_refined/build.py`. Review generated `output/` frames, mask overlays, and all GIFs; numerical QA is necessary but insufficient. Coordinates are specific to this source/donor pair.
+
+
+
+Mask iteration: raised the lower-left boundary to keep the small under-eye skin warp outside the edit; the open-eye transplant changes 1,384 pixels.

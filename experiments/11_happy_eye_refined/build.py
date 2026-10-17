@@ -39,9 +39,10 @@ def composite(bottom, top_rgb, weight):
 # Left eye: tight contour around eyelids + a small outer-lash extension.
 left_main = polygon([
     (479,149),(482,142),(489,137),(497,135),(506,135),(513,138),
-    (517,142),(518,149),(515,155),(507,159),(497,160),(487,159),(481,155)
+    (517,142),(518,149),(515,153),(507,156),(497,157),(487,156),(481,154)
 ])
-left_lash = polygon([(476,151),(481,149),(484,151),(483,156),(477,157)])
+# Raise the lower contour to keep the small under-eye skin warp outside the edit.
+left_lash = polygon([(476,151),(481,149),(484,151),(483,155),(477,155)])
 left = np.maximum(feather(left_main,1.15), feather(left_lash,0.8))
 # Right eye: thinner lower boundary to preserve more original under-eye skin.
 right_main = polygon([
@@ -173,3 +174,4 @@ arr=np.array(bg); arr[boundary]=[0,255,0,255]
 Image.fromarray(arr,'RGBA').crop((450,115,607,216)).resize((942,606), Image.Resampling.NEAREST).save(OUT/'changed_boundary.png', optimize=True)
 (OUT/'QA.json').write_text(json.dumps(qa, indent=2)+'\n')
 print(json.dumps(qa, indent=2))
+

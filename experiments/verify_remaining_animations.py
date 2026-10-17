@@ -16,6 +16,24 @@ EXPRESSIONS = {
 }
 STATES = ("idle", "blink", "talking", "blink_talking")
 GIFS = {"blink.gif": 5, "talk.gif": 5, "combined.gif": 9}
+ALL_EXPRESSIONS = (
+    "neutral", "happy", "shocked", "pouty", "angry", "embarrassed", "sad", "strained_smile"
+)
+
+# Check every published state, including the original Neutral/Happy/Shocked builds.
+for slug in ALL_EXPRESSIONS:
+    folder = ROOT / "static/animation" / slug
+    reference_alpha = None
+    for state in STATES:
+        with Image.open(folder / f"{state}.png") as image:
+            image.load()
+            assert image.size == (1086, 1448) and image.mode == "RGBA", f"{slug}/{state}: bad PNG"
+            alpha = np.asarray(image)[:, :, 3]
+            if reference_alpha is None:
+                reference_alpha = alpha.copy()
+            else:
+                assert np.array_equal(alpha, reference_alpha), f"{slug}/{state}: alpha differs from idle"
+print("PASS all eight expressions: four full-size RGBA states with identical per-expression alpha")
 
 for slug, (experiment, source_name) in EXPRESSIONS.items():
     source = np.asarray(Image.open(ROOT / "static/sprites" / f"{source_name}.png").convert("RGBA"))

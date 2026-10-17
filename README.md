@@ -80,7 +80,7 @@ If only a small donor region is needed, store a lossless crop **with its origina
 5. Inspect blink/talk/**combined** animations and individual frames at normal scale and on light/dark backgrounds. Look for eye or mouth shifts, color flicker, hair loss, eyelash clipping, leftover source eyes, unnatural bags, and expression mismatch.
 6. Record the concrete defect and refine its specific mask, donor alignment, or local color. Inspect again after every change. Only stop when no obvious visual issues remain and additional automated iterations give negligible gains, or a clearly documented technical limitation blocks them. Suggest manual Krita work **only after** genuine automated iteration reaches that limit.
 
-**Case study:** experiment 10 improved the Neutral left eyelash using its own small extension and preserved under-eye skin. Applying that *method*, with newly drawn polygons, to experiment 11 improved Happy using **the same donor as 09**. Changed eye pixels fell from **1,860 to 1,489** (~20% fewer); this is corroborating evidence of a narrower edit, **not** a target metric or proof of quality. The especially important improvement was raising Happy's right-eye lower mask boundary without cutting the eye.
+**Case study:** experiment 10 improved the Neutral left eyelash using its own small extension and preserved under-eye skin. Applying that *method*, with newly drawn polygons, to experiment 11 improved Happy using **the same donor as 09**. The latest under-eye refinement changes **1,384** eye pixels, down from **1,860** (~26% fewer); this is corroborating evidence of a narrower edit, **not** a target metric or proof of quality. Visual comparison remains decisive.
 
 ## 5. Validate and deliver
 

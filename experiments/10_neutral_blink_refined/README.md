@@ -5,3 +5,7 @@ Refines experiment 04 using **thinner eyelid-following masks**, a tiny separate 
 Reuses both original donor files from `experiments/04_source_anchored_animation/assets/`. No duplicate asset copies.
 
 Run: `python experiments/10_neutral_blink_refined/build.py`. Generated sprites, GIFs, mask and changed-boundary comparisons, and QA appear in ignored `output/`. Inspect those visually; pixel confinement alone is not approval.
+
+
+
+After another 8x review, the separate outer-lash tip was extended by only 2 source pixels to remove a barely visible cutoff. The main eyelid contour is unchanged.
