@@ -123,13 +123,36 @@ See [`four-state comparison`](experiments/05_happy_animation/output/four_states_
 
 **Acceptance is visual, not just mechanical.** Alpha preservation, pixel confinement, and numerical measurements are mandatory sanity checks, **not** evidence that the artwork is clean. Do not hand premature prototypes to the user for discovery of obvious defects. The user remains the final artistic judge; never label an unreviewed animation “approved” or “perfect.”
 
-## F. Acceptance rules / next work
+## F. Masking breakthrough — refined Neutral and Happy experiments
+
+**Key finding: improve the mask before regenerating the donor.** The much cleaner Happy eyes came from reusing the **same source-anchored AI eye donor** with more accurate eye-specific masks. Neutral refinement (experiment 10) demonstrated the method; Happy refinement (experiment 11) confirmed it on a different expression. These newer experiment folders are **local working results, not yet committed to this repository**.
+
+**The rule: use the smallest mask that fully replaces the required feature.** This is *not* the smallest mask possible.
+
+- **Too broad:** imports donor skin, cheeks, and hair, causing under-eye color patches, warping, and flicker.
+- **Too narrow:** clips eyelids/lashes or leaves original eye/iris remnants.
+- **Correct:** trace each actual eye separately; keep its entire required eye shape, but preserve as much surrounding original skin/hair as possible. Adjust the upper and lower boundaries independently.
+
+**Reproducible tactics from experiments 10–11:**
+1. Review source, donor, previous transplant, mask overlay, and **changed-pixel boundary** at 1× and 4–8× *before* editing. A wide halo below the eye is a warning.
+2. Use a tightly traced main eyelid polygon; when necessary, add a **tiny, separate lash-tip polygon** rather than enlarging the whole mask.
+3. Raise/trim the **lower boundary independently** to preserve original under-eye shading, without cutting the donor iris or eyelid. Protect crossing hair specifically.
+4. Where the donor introduces only minor unwanted differences around a protected outer hair/eye boundary, selectively retain original pixels. Keep this constrained to the region and verify it doesn't damage the actual eye.
+5. Re-render, compare full face and zoomed crops, overlay changed-pixel edges, inspect blinking/talking GIF frames, and revise. A smaller changed-pixel count is a useful indicator **only if the full feature remains intact**.
+
+**Concrete Happy comparison (same eye donor):** experiment 09 changed **1,860** eye-frame pixels; experiment 11 changed **1,489** (about 20% fewer). Visual inspection, not the count, established that 11 preserved more surrounding skin without obvious clipping. The right eye's lower contour was especially important.
+
+**Mouth lesson:** Compressing or drawing a closed smile with Python produced awkward lip geometry. A **direct source-image edit using the image model** produced a natural closed-Happy-smile donor; transplant only the lip region, keeping the original open-mouth state for talking. The image model must actually receive the original PNG, not merely a path or written description.
+
+**Never transfer mask coordinates between expressions.** Transfer the *inspection and refinement process*. Only suggest manual Krita finishing when automated, visually inspected refinements have genuinely plateaued.
+
+## G. Acceptance rules / next work
 
 1. Judge donor emotion/pose **and** transplant quality independently; the former may look right while the latter leaks pixels.
 2. Compare base vs transplant at normal size **and** 4–8×, on both light and dark backgrounds. Toggle as GIF or video: static side-by-sides miss flicker.
 3. Reject wrong emotion (happy squint on neutral, shocked mouth), weak mouth delta, drifting mouth, incomplete iris/lashes, hair leakage, jaw changes, or palette artifacts.
 4. Pixel checks (alpha identical; changed pixels confined to mask; mouth location stable) are **necessary but insufficient**; masks can contain unwanted hair and a leftover lash can be outside the mask.
-5. Finish small eyelash/hair intersections manually in Krita, then validate the combined speaking + blinking frames. Test other expressions/poses separately before promising automation.
+5. Iterate on eyelash/hair intersections automatically first; use Krita only after further automated refinements plateau. Validate the combined speaking + blinking frames. Test other expressions/poses separately before promising automation.
 6. Keep the proven static-expression pipeline as a reliable fallback while animation techniques remain experimental.
 
 Other explored methods: full layered puppets worked technically but were too manual; Live2D/Spine require artwork separation and rigging. Neither is a current priority.
