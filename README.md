@@ -24,10 +24,11 @@ python experiments/10_neutral_blink_refined/build.py
 python experiments/11_happy_eye_refined/build.py
 python experiments/12_shocked_animation/build.py
 python experiments/build_remaining_animations.py
+python experiments/build_animation_previews.py
 # Experiment output/ directories are temporary and ignored by Git.
 ```
 
-Reviewed, published states are stored under `static/animation/{neutral,happy,shocked,pouty,angry,embarrassed,sad,strained_smile}/` as `idle.png`, `blink.png`, `talking.png`, and `blink_talking.png`. The GIFs there are the previews each experiment already produces; Neutral has no combined GIF. PNG state files preserve the source alpha. GIF previews use a fixed opaque light-gray background because GIF transparency cannot retain the sprites' antialiased alpha.
+Reviewed, published states are stored under `static/animation/{neutral,happy,shocked,pouty,angry,embarrassed,sad,strained_smile}/` as `idle.png`, `blink.png`, `talking.png`, and `blink_talking.png`. Regenerate the published GIFs from these states with `python experiments/build_animation_previews.py`: each expression gets blink, speech, and combined previews at the source sprite's 1086×1448 resolution, plus `static/animation/all_expressions.gif`, a labeled 3×3 face montage that animates all eight expressions together. PNG state files preserve the source alpha. GIF previews use a fixed opaque light-gray background because GIF transparency cannot retain the sprites' antialiased alpha.
 
 Sources: `static/sprites/01_neutral_worried.png` through `08_strained_smile.png`, all 1086×1448 RGBA. **Never overwrite these sources.** Reuse an original sprite for any state it already represents: Neutral, Pouty, and Sad `idle.png`; Angry, Embarrassed, and Strained Smile `talking.png`; Shocked `idle.png`; and Happy `blink_talking.png` (closed eyes with the original open smile). Experiments 13–17 document the mouth-state choice and expression-specific masks for the remaining five expressions.
 
@@ -85,6 +86,7 @@ If only a small donor region is needed, store a lossless crop **with its origina
 
 - **Mechanical QA:** same dimensions, original alpha exactly preserved, changes confined to intentional feature regions, untouched hair/body pixel-identical; run the relevant ~build.py~ assertions.
 - For experiments 13–17, run `python experiments/verify_remaining_animations.py` after copying the reviewed output files into `static/animation/`.
+- Regenerate and validate the large published GIFs with `python experiments/build_animation_previews.py` and `python experiments/verify_remaining_animations.py`.
 - **Visual QA (decisive):** source vs result at normal size and 4–8×, mask and changed-boundary overlays, light/dark backgrounds, all animation states and GIF playback. Mechanical QA alone cannot detect a *bad mask*.
 - **Preserve all four states** as applicable: eyes open/closed × mouth open/closed. For Happy, the original closed-eye/open-mouth combination needs no synthetic replacement.
 - **Be precise about status:** distinguish a promising result from a visually reviewed one and from user approval. If an artifact remains, say exactly where and why.
@@ -94,7 +96,7 @@ If only a small donor region is needed, store a lossless crop **with its origina
 
 The eight static expressions in ~static/sprites/~ were produced from one coordinated 4×2 expression sheet using aligned, feathered **broader face transplants**. This pipeline is distinct from animation: static frames tolerate small facial differences while blink/talk toggles expose every mismatch. Verify it with ~python static/verify.py~.
 
-The remaining five animation sets are experiments 13–17: Pouty, Angry, Embarrassed, Sad, and Strained Smile. Their cropped donors, source coordinates, per-expression masks, and build notes are versioned; `python experiments/build_remaining_animations.py` regenerates their four PNG states and three GIF previews under each ignored `output/` directory.
+The remaining five animation sets are experiments 13–17: Pouty, Angry, Embarrassed, Sad, and Strained Smile. Their cropped donors, source coordinates, per-expression masks, and build notes are versioned; `python experiments/build_remaining_animations.py` regenerates their four PNG states and review GIFs under each ignored `output/` directory. The publisher script rebuilds the tracked, native-resolution previews from the four PNG states.
 
 For original prompts, archived experiments 01–05, failures to avoid, and early lessons, see [HISTORY.md](HISTORY.md). That document is historical; **this README plus the experiment 10/11 scripts are authoritative for new animation work**.
 

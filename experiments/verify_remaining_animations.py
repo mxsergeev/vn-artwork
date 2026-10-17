@@ -39,7 +39,7 @@ for slug, (experiment, source_name) in EXPRESSIONS.items():
         assert np.array_equal(final_state[:, :, 3], source[:, :, 3]), f"{slug}/{state}: source alpha changed"
     for filename, expected_frames in GIFS.items():
         with Image.open(published / filename) as gif:
-            assert gif.size == (272, 362), f"{slug}/{filename}: unexpected size {gif.size}"
+            assert gif.size == (1086, 1448), f"{slug}/{filename}: unexpected size {gif.size}"
             assert gif.n_frames == expected_frames, f"{slug}/{filename}: unexpected frame count {gif.n_frames}"
             for frame_no in range(gif.n_frames):
                 gif.seek(frame_no)
@@ -50,3 +50,23 @@ preview = ROOT / "static/animation/preview.jpg"
 with Image.open(preview) as image:
     assert image.format == "JPEG" and image.size == (1280, 690)
 print("PASS eight-expression index preview")
+
+for slug in ("neutral", "happy", "shocked"):
+    folder = ROOT / "static/animation" / slug
+    for filename, expected_frames in GIFS.items():
+        with Image.open(folder / filename) as gif:
+            assert gif.size == (1086, 1448), f"{slug}/{filename}: unexpected size {gif.size}"
+            assert gif.n_frames == expected_frames, f"{slug}/{filename}: unexpected frame count {gif.n_frames}"
+            for frame_no in range(gif.n_frames):
+                gif.seek(frame_no)
+                gif.convert("RGB")
+    print(f"PASS {slug}: 3 native-resolution GIFs")
+
+all_expressions = ROOT / "static/animation/all_expressions.gif"
+with Image.open(all_expressions) as gif:
+    assert gif.size == (1284, 1416), f"all_expressions.gif: unexpected size {gif.size}"
+    assert gif.n_frames == 8, f"all_expressions.gif: unexpected frame count {gif.n_frames}"
+    for frame_no in range(gif.n_frames):
+        gif.seek(frame_no)
+        gif.convert("RGB")
+print("PASS all-expression montage GIF")

@@ -97,7 +97,7 @@ def face(frame: np.ndarray, box: tuple[int, int, int, int], scale: int = 4) -> I
     return bg.convert("RGB").resize((im.width * scale, im.height * scale), Image.Resampling.NEAREST)
 
 
-def save_gif(path: Path, frames: list[np.ndarray], durations: list[int], size=(272, 362)) -> None:
+def save_gif(path: Path, frames: list[np.ndarray], durations: list[int], size=(1086, 1448)) -> None:
     flattened = [flatten(a).resize(size, Image.Resampling.BILINEAR) for a in frames]
     montage = Image.new("RGB", (size[0], size[1] * len(flattened)))
     for i, im in enumerate(flattened):

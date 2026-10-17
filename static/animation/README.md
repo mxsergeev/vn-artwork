@@ -4,7 +4,7 @@ Each expression folder contains four 1086×1448 RGBA states: `idle.png`, `blink.
 
 | Folder | State reused from the original sprite | GIF previews |
 |---|---|---|
-| `neutral/` | `idle.png` | `blink.gif`, `talk.gif` |
+| `neutral/` | `idle.png` | `blink.gif`, `talk.gif`, `combined.gif` |
 | `happy/` | `blink_talking.png` | `blink.gif`, `talk.gif`, `combined.gif` |
 | `shocked/` | `idle.png` | `blink.gif`, `talk.gif`, `combined.gif` |
 | `pouty/` | `idle.png` | `blink.gif`, `talk.gif`, `combined.gif` |
@@ -13,7 +13,7 @@ Each expression folder contains four 1086×1448 RGBA states: `idle.png`, `blink.
 | `sad/` | `idle.png` | `blink.gif`, `talk.gif`, `combined.gif` |
 | `strained_smile/` | `talking.png` | `blink.gif`, `talk.gif`, `combined.gif` |
 
-GIFs are preview files, flattened onto an opaque pale-gray background. GIF transparency cannot represent the sprites' antialiased alpha without edge artifacts. Use the PNG states when transparency is needed. Neutral's experiment does not produce a combined GIF, so none is included.
+Each expression folder contains three full-resolution GIF previews (`blink.gif`, `talk.gif`, and `combined.gif`) at 1086×1448. `all_expressions.gif` shows all eight face animations together in a labeled 3×3 grid. GIFs are flattened onto an opaque pale-gray background because GIF transparency cannot represent the sprites' antialiased alpha without edge artifacts; use the PNG states when transparency is needed.
 
-Build scripts write temporary frames, masks, GIFs, and QA files under the ignored experiment `output/` folders. These directories contain reproducible work products; this folder contains the reviewed, published copies.
+`python experiments/build_animation_previews.py` regenerates every published GIF from the four PNG states in these folders. Experiment scripts write temporary frames, masks, review GIFs, and QA files under the ignored experiment `output/` folders.
 
