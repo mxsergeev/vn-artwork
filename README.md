@@ -2,7 +2,7 @@
 
 **Purpose:** Experiment with AI-assisted character artwork generation and manipulation, particularly consistent expressions, blinking, and talking sprites. This repository preserves reusable methods, scripts, source assets, prototypes, and lessons from failed attempts; it is independent of any application using the artwork.
 
-**Start here.** `static/` contains the proven eight-expression workflow; `experiments/01`–`03` document failed animation attempts; **`experiments/04_source_anchored_animation/`** is the neutral mouth/blink pilot; **`experiments/05_happy_animation/`** is the latest Happy experiment. Original sprites and shared inputs are not duplicated.
+**Start here.** `static/` is the proven static-expression pipeline; `experiments/01`–`05` preserve earlier animation research. Current reusable successes are **[09 — Happy closed-smile donor](experiments/09_happy_imagen_mouth/README.md)**, **[10 — refined Neutral blink](experiments/10_neutral_blink_refined/README.md)**, and **[11 — refined Happy eyes](experiments/11_happy_eye_refined/README.md)**. These experiments share existing donor assets and regenerate their outputs locally.
 
 ## Status (read first)
 
@@ -15,6 +15,9 @@
 | Original-anchored, neutral **talking** donor + tight lip mask | **USER-APPROVED pilot**: noticeable opening, mouth anchored, jaw preserved | [`experiments/04_source_anchored_animation/previews/talk_preview.gif`](experiments/04_source_anchored_animation/previews/talk_preview.gif) |
 | Original-anchored **closed eyelids** + contoured per-eye masks | **NEARLY WORKING**, not final: substantial improvement, residual left lash/edge artifact; manual finishing still needed | [`experiments/04_source_anchored_animation/previews/blink_preview.gif`](experiments/04_source_anchored_animation/previews/blink_preview.gif) |
 | Happy open-eye blink + smaller talking mouth | **PROMISING PROTOTYPE**, not final/approved; uses existing aligned eyes and original Happy mouth; first directly-edited AI donor archived separately and not yet transplanted | [`experiments/05_happy_animation/output/four_states_face_comparison.png`](experiments/05_happy_animation/output/four_states_face_comparison.png) |
+| Happy idle/talk with generated closed smile | **SOURCE-ANCHORED DONOR**: natural idle smile instead of compressed mouth | [Experiment 09](experiments/09_happy_imagen_mouth/README.md) |
+| Neutral blink mask cleanup | **USER-PRAISED**: precise lash extension and reduced under-eye patches | [Experiment 10](experiments/10_neutral_blink_refined/README.md) |
+| Happy eye mask cleanup | **USER-APPROVED BEST**: same eye donor with thinner, better-shaped masks | [Experiment 11](experiments/11_happy_eye_refined/README.md) |
 
 ## A. Proven static-expression pipeline — use this
 
@@ -125,7 +128,7 @@ See [`four-state comparison`](experiments/05_happy_animation/output/four_states_
 
 ## F. Masking breakthrough — refined Neutral and Happy experiments
 
-**Key finding: improve the mask before regenerating the donor.** The much cleaner Happy eyes came from reusing the **same source-anchored AI eye donor** with more accurate eye-specific masks. Neutral refinement (experiment 10) demonstrated the method; Happy refinement (experiment 11) confirmed it on a different expression. These newer experiment folders are **local working results, not yet committed to this repository**.
+**Key finding: improve the mask before regenerating the donor.** The much cleaner Happy eyes came from reusing the **same source-anchored AI eye donor** with more accurate eye-specific masks. Neutral refinement (experiment 10) demonstrated the method; Happy refinement (experiment 11) confirmed it on a different expression. The refined scripts and necessary donor data are committed here; full-size GIFs, masks, and sprites are reproducible generated outputs.
 
 **The rule: use the smallest mask that fully replaces the required feature.** This is *not* the smallest mask possible.
 

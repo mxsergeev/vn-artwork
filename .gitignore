@@ -21,3 +21,8 @@ Thumbs.db
 /static/vn_expression_fullbody_preview.png
 
 # Experiment 05's curated output is intentionally versioned.
+
+# Newer experiments generate all full-resolution frames, masks, GIFs, and QA locally
+/experiments/09_happy_imagen_mouth/output/
+/experiments/10_neutral_blink_refined/output/
+/experiments/11_happy_eye_refined/output/
