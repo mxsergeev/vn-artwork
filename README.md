@@ -22,10 +22,12 @@ python static/verify.py
 python experiments/10_neutral_blink_refined/build.py
 python experiments/11_happy_eye_refined/build.py
 python experiments/12_shocked_animation/build.py
-# New experiment output/ directories are generated locally and ignored by Git.
+# Experiment output/ directories are temporary and ignored by Git.
 ```
 
-Sources: ~static/sprites/01_neutral_worried.png~ (eyes open), ~static/sprites/02_happy.png~ (eyes closed). Sprites are 1086×1448 RGBA. **Never overwrite these sources.** The original expression determines which frame is already available naturally; for Happy the closed eyes and open smiling mouth are original pixels.
+Reviewed, published states are stored under `static/animation/{neutral,happy,shocked}/` as `idle.png`, `blink.png`, `talking.png`, and `blink_talking.png`. The GIFs there are the previews each experiment already produces; Neutral has no combined GIF. PNG state files preserve the source alpha. GIF previews use a fixed opaque light-gray background because GIF transparency cannot retain the sprites' antialiased alpha.
+
+Sources: ~static/sprites/01_neutral_worried.png~ (eyes open), ~static/sprites/02_happy.png~ (eyes closed), and ~static/sprites/03_shocked.png~ (eyes open). Sprites are 1086×1448 RGBA. **Never overwrite these sources.** Reuse an original sprite for any state it already represents: Neutral and Shocked `idle.png`, and Happy `blink_talking.png` (closed eyes with the original open smile).
 
 For each feature, inspect **source sprite, candidate donor, existing result, and reference masks** at native size and 4–8×. Determine the exact source features to remove, desired donor features to retain, and hair strands crossing the edit.
 
@@ -83,7 +85,7 @@ If only a small donor region is needed, store a lossless crop **with its origina
 - **Visual QA (decisive):** source vs result at normal size and 4–8×, mask and changed-boundary overlays, light/dark backgrounds, all animation states and GIF playback. Mechanical QA alone cannot detect a *bad mask*.
 - **Preserve all four states** as applicable: eyes open/closed × mouth open/closed. For Happy, the original closed-eye/open-mouth combination needs no synthetic replacement.
 - **Be precise about status:** distinguish a promising result from a visually reviewed one and from user approval. If an artifact remains, say exactly where and why.
-- **Project hygiene:** commit only source scripts, essential (preferably cropped) donor assets, concise experiment notes, and a compact preview. Generated full-size frames/GIFs/masks/QA are reproducible outputs and ignored by ~.gitignore~. No throwaway test images, duplicate full-body donors, extra instructions, or ZIP bundles in the repository.
+- **Project hygiene:** track the reviewed final PNG states, supported GIF previews, and compact index preview under `static/animation/`. Keep generated experiment `output/` frames, GIFs, masks, and QA ignored by ~.gitignore~; publish only the selected reviewed copies. Commit source scripts, essential cropped donors, and concise experiment notes as needed. No throwaway test images, duplicate full-body donors, extra instructions, or ZIP bundles in the repository.
 
 ## 6. Static expressions and historical research
 

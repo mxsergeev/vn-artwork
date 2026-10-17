@@ -118,26 +118,21 @@ mouth_boundary_view=np.array(mouth_base_bg); mouth_boundary_view[mouth_boundary]
 Image.fromarray(mouth_boundary_view,'RGBA').crop(mouth_box).resize(((mouth_box[2]-mouth_box[0])*8,(mouth_box[3]-mouth_box[1])*8),Image.Resampling.NEAREST).save(OUT/'mouth_changed_boundary.png')
 
 def save_gif(filename, frames, durations):
-    # Shared 255-color palette plus transparent index avoids frame-to-frame palette flicker.
+    # Like experiments 10 and 11, flatten onto one matte before palette conversion.
+    # GIF transparency is binary and cannot preserve the sprite's antialiased alpha.
     samples=[]
     for frame in frames:
         bg=Image.new('RGBA',(W,H),'#f0f0f0'); bg.alpha_composite(Image.fromarray(frame,'RGBA'))
         samples.append(bg.convert('RGB').resize((272,362),Image.Resampling.BILINEAR))
     montage=Image.new('RGB',(272,362*len(samples)))
     for i,im in enumerate(samples): montage.paste(im,(0,362*i))
-    palette=montage.quantize(colors=255,method=Image.Quantize.MEDIANCUT,dither=Image.Dither.NONE)
-    palette_bytes=palette.getpalette()[:765]+[0,0,0]
-    palette.putpalette(palette_bytes)
+    palette=montage.quantize(colors=256,method=Image.Quantize.MEDIANCUT,dither=Image.Dither.NONE)
     indexed=[]
     for frame in frames:
-        rgba=Image.fromarray(frame,'RGBA')
-        rgb=Image.new('RGBA',(W,H),'#f0f0f0'); rgb.alpha_composite(rgba)
+        rgb=Image.new('RGBA',(W,H),'#f0f0f0'); rgb.alpha_composite(Image.fromarray(frame,'RGBA'))
         p=rgb.convert('RGB').quantize(palette=palette,dither=Image.Dither.NONE)
-        arr=np.array(p)
-        arr[np.asarray(rgba.getchannel('A'))<128]=255
-        p=Image.fromarray(arr,'P'); p.putpalette(palette_bytes); p.info['transparency']=255
         indexed.append(p)
-    indexed[0].save(OUT/filename,save_all=True,append_images=indexed[1:],duration=durations,loop=0,disposal=2,transparency=255,optimize=False)
+    indexed[0].save(OUT/filename,save_all=True,append_images=indexed[1:],duration=durations,loop=0,disposal=2,optimize=False)
 
 save_gif('shocked_blink.gif',[BASE,out,BASE,out,BASE],[1100,130,1300,130,1100])
 save_gif('shocked_mouth.gif',[BASE,talk,BASE,talk,BASE],[240,220,180,260,900])
