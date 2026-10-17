@@ -108,7 +108,22 @@ python experiments/05_happy_animation/build.py
 
 See [`four-state comparison`](experiments/05_happy_animation/output/four_states_face_comparison.png), [`combined GIF`](experiments/05_happy_animation/output/combined_preview.gif), and [`experiment notes`](experiments/05_happy_animation/README.md). Open-eye emotional fit, hair/eyelash edges and mouth skin texture still require subjective review.
 
-## E. Acceptance rules / next work
+## E. Mandatory per-image transplantation and visual QA discipline
+
+**Every source/donor pair is unique.** Never reuse or shrink a generic eye/face mask blindly. Analyze the original and donor at native size and 4–8×, separately for each eye/mouth: trace the *complete* replacement feature (including source iris/lashes that must disappear), identify protected hair strands and skin, then design independent, anatomically justified contours. Measure coordinates from the pixels, not a guessed ellipse. Donor alignment/fit and local skin tone must be evaluated separately from mask geometry.
+
+**For every iteration, without exception:**
+1. Inspect the original, donor, and candidate mask overlays (including hair-intersection details) before compositing.
+2. Transplant using tight feature-specific masks, minimal feathering, preserved source alpha, and only necessary local color correction. Never enlarge a mask merely to hide a geometry mismatch.
+3. **Open and inspect the actual rendered sprite** at normal size and 4–8×, on light and dark backgrounds. Do not infer quality from numerical QA.
+4. Compare original vs candidate with aligned overlays, difference/highlight maps, and toggled layers. Pay special attention to *unintended* changes in hair, eyelids, cheeks, jaw, and shading, and also to old eye/lash remnants or feature cutoff.
+5. Examine the animated blink/talk/combined frames, ideally as GIFs and frame-by-frame. Check flicker, facial motion/warping, mouth centering, and emotional consistency.
+6. Identify concrete defects, adjust **that image's** mask/donor alignment/color correction, regenerate, and repeat. Inspect again after each change; a newly introduced defect invalidates the iteration.
+7. Stop only when visual comparisons show no obvious defects and successive automated refinements give negligible benefit **or** remaining defects cannot reasonably be corrected with these tools. Report remaining artifacts honestly. Suggest localized Krita cleanup **only after** serious automated iteration reaches that plateau.
+
+**Acceptance is visual, not just mechanical.** Alpha preservation, pixel confinement, and numerical measurements are mandatory sanity checks, **not** evidence that the artwork is clean. Do not hand premature prototypes to the user for discovery of obvious defects. The user remains the final artistic judge; never label an unreviewed animation “approved” or “perfect.”
+
+## F. Acceptance rules / next work
 
 1. Judge donor emotion/pose **and** transplant quality independently; the former may look right while the latter leaks pixels.
 2. Compare base vs transplant at normal size **and** 4–8×, on both light and dark backgrounds. Toggle as GIF or video: static side-by-sides miss flicker.
