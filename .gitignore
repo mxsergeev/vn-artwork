@@ -27,7 +27,13 @@ Thumbs.db
 /experiments/10_neutral_blink_refined/output/
 /experiments/11_happy_eye_refined/output/
 /experiments/12_shocked_animation/output/
+/experiments/13_pouty_animation/output/
+/experiments/14_angry_animation/output/
+/experiments/15_embarrassed_animation/output/
+/experiments/16_sad_animation/output/
+/experiments/17_strained_smile_animation/output/
 
 # Reviewed final animation assets and index preview are intentionally tracked.
 !/static/animation/
 !/static/animation/**
+

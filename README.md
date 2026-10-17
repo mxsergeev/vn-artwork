@@ -10,6 +10,7 @@
 | [11 — refined Happy eyes](experiments/11_happy_eye_refined/build.py) · [preview](experiments/11_happy_eye_refined/preview.jpg) | **Best Happy eye result**: redraw per-eye masks, preserve under-eye skin, extend only the needed lash tip, protect outer-right hair |
 | [10 — refined Neutral blink](experiments/10_neutral_blink_refined/build.py) · [preview](experiments/10_neutral_blink_refined/preview.jpg) | The cleanup technique that fixed lash cutoff and pale under-eye patches |
 | [09 — natural Happy mouth](experiments/09_happy_imagen_mouth/build.py) · [preview](experiments/09_happy_imagen_mouth/preview.jpg) | Transplant an **image-generated** closed-smile donor instead of deforming the original mouth |
+| [13–17 — remaining expression animations](experiments/build_remaining_animations.py) | Five expression-specific blink/speech builds with separate masks and source-state reuse |
 | [Static-expression pipeline](static/vn_expression_transplant.py) | Separate, **proven** method for eight non-animated expressions; larger face masks are appropriate *only* there |
 
 Read the relevant ~build.py~ and short experiment README before editing. **Copy the approach, never another expression's mask coordinates.** Historical attempts and failures: [HISTORY.md](HISTORY.md).
@@ -22,12 +23,13 @@ python static/verify.py
 python experiments/10_neutral_blink_refined/build.py
 python experiments/11_happy_eye_refined/build.py
 python experiments/12_shocked_animation/build.py
+python experiments/build_remaining_animations.py
 # Experiment output/ directories are temporary and ignored by Git.
 ```
 
-Reviewed, published states are stored under `static/animation/{neutral,happy,shocked}/` as `idle.png`, `blink.png`, `talking.png`, and `blink_talking.png`. The GIFs there are the previews each experiment already produces; Neutral has no combined GIF. PNG state files preserve the source alpha. GIF previews use a fixed opaque light-gray background because GIF transparency cannot retain the sprites' antialiased alpha.
+Reviewed, published states are stored under `static/animation/{neutral,happy,shocked,pouty,angry,embarrassed,sad,strained_smile}/` as `idle.png`, `blink.png`, `talking.png`, and `blink_talking.png`. The GIFs there are the previews each experiment already produces; Neutral has no combined GIF. PNG state files preserve the source alpha. GIF previews use a fixed opaque light-gray background because GIF transparency cannot retain the sprites' antialiased alpha.
 
-Sources: ~static/sprites/01_neutral_worried.png~ (eyes open), ~static/sprites/02_happy.png~ (eyes closed), and ~static/sprites/03_shocked.png~ (eyes open). Sprites are 1086×1448 RGBA. **Never overwrite these sources.** Reuse an original sprite for any state it already represents: Neutral and Shocked `idle.png`, and Happy `blink_talking.png` (closed eyes with the original open smile).
+Sources: `static/sprites/01_neutral_worried.png` through `08_strained_smile.png`, all 1086×1448 RGBA. **Never overwrite these sources.** Reuse an original sprite for any state it already represents: Neutral, Pouty, and Sad `idle.png`; Angry, Embarrassed, and Strained Smile `talking.png`; Shocked `idle.png`; and Happy `blink_talking.png` (closed eyes with the original open smile). Experiments 13–17 document the mouth-state choice and expression-specific masks for the remaining five expressions.
 
 For each feature, inspect **source sprite, candidate donor, existing result, and reference masks** at native size and 4–8×. Determine the exact source features to remove, desired donor features to retain, and hair strands crossing the edit.
 
@@ -82,6 +84,7 @@ If only a small donor region is needed, store a lossless crop **with its origina
 ## 5. Validate and deliver
 
 - **Mechanical QA:** same dimensions, original alpha exactly preserved, changes confined to intentional feature regions, untouched hair/body pixel-identical; run the relevant ~build.py~ assertions.
+- For experiments 13–17, run `python experiments/verify_remaining_animations.py` after copying the reviewed output files into `static/animation/`.
 - **Visual QA (decisive):** source vs result at normal size and 4–8×, mask and changed-boundary overlays, light/dark backgrounds, all animation states and GIF playback. Mechanical QA alone cannot detect a *bad mask*.
 - **Preserve all four states** as applicable: eyes open/closed × mouth open/closed. For Happy, the original closed-eye/open-mouth combination needs no synthetic replacement.
 - **Be precise about status:** distinguish a promising result from a visually reviewed one and from user approval. If an artifact remains, say exactly where and why.
@@ -91,4 +94,7 @@ If only a small donor region is needed, store a lossless crop **with its origina
 
 The eight static expressions in ~static/sprites/~ were produced from one coordinated 4×2 expression sheet using aligned, feathered **broader face transplants**. This pipeline is distinct from animation: static frames tolerate small facial differences while blink/talk toggles expose every mismatch. Verify it with ~python static/verify.py~.
 
+The remaining five animation sets are experiments 13–17: Pouty, Angry, Embarrassed, Sad, and Strained Smile. Their cropped donors, source coordinates, per-expression masks, and build notes are versioned; `python experiments/build_remaining_animations.py` regenerates their four PNG states and three GIF previews under each ignored `output/` directory.
+
 For original prompts, archived experiments 01–05, failures to avoid, and early lessons, see [HISTORY.md](HISTORY.md). That document is historical; **this README plus the experiment 10/11 scripts are authoritative for new animation work**.
+
