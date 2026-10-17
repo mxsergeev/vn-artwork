@@ -29,23 +29,20 @@ For each feature, inspect **source sprite, candidate donor, existing result, and
 
 ## 2. Generate a donor using the actual original image
 
-**Required two-message image handoff:**
+**Mandatory image-reference check — never generate without the actual source image attached to the editor:**
 
-1. Retrieve the exact original sprite PNG, save it to `/mnt/data/`, and verify it is a valid image.
-2. **Render the actual PNG inline in your chat message**, using Markdown image syntax with the verified file path, for example:
+1. Retrieve and verify the exact original sprite PNG. **Inspect the editing tool's real input parameters** before invoking it.
+2. **Direct reference-image input available** (for example, `reference_image_paths` in a tool that actually exposes it, such as some Work environments): pass the original PNG through that supported reference-image input and proceed with the edit. Do not assume a mode supports a parameter without checking.
+3. **Chat mode, or no supported direct file-reference input:** **STOP and ask the user to upload the necessary original PNG(s) themselves as image attachments in their next message. Do not generate anything yet.** If the user has already attached those images directly, use them instead of asking again.
+4. After the user's images are attached, edit **those actual image inputs**. If the editor still cannot access them as references, **STOP and explain the limitation**. Never substitute a text description, a lookalike, or an unrelated expression sheet.
 
-   ```markdown
-   ![Original Shocked sprite](sandbox:/mnt/data/03_shocked.png)
-   ```
-
-3. **Send that message, then STOP.** Ask the user to request that you proceed **in their next message**, after the original image has been rendered. **Do not invoke the image generator in the same turn.**
-4. When the user asks you to proceed, **edit the original sprite shown in the previous message**. Use that image as the reference, not just its filename or a text description. If the image cannot be used as a reference, stop rather than generating a lookalike.
+An assistant-rendered PNG, Markdown `![...](sandbox:/...)` link, local path, GitHub URL, or tool preview **does not prove the image was passed to the editing model**. The previously documented two-message *assistant-render → user proceeds* handoff is **not a reliable substitute for a real image reference**. Never claim a reference parameter was used unless the actual call confirms it.
 
 **Donor rules:**
 
 1. Ask for **one narrowly specified change**: eyes open/closed for a blink, or a natural open/closed speaking mouth. Keep head angle, eyelash style, face proportions, eyebrows, hair, skin tone, lighting, lips' position, clothing, pose, framing, and transparent background unchanged. No new blush or altered emotion unless explicitly desired.
-3. Inspect the returned image against the source. Reject major geometry, alignment, emotion, hair, or style differences; regenerate or use a better donor. **The generated image is only a donor, not an animation frame.**
-4. Existing aligned donors should be reused if their feature is good. The major improvement from Happy 09 to 11 required **no new eye generation**.
+2. Inspect the returned image against the source. Reject major geometry, alignment, emotion, hair, or style differences; regenerate or use a better donor. **The generated image is only a donor, not an animation frame.**
+3. Existing aligned donors should be reused if their feature is good. The major improvement from Happy 09 to 11 required **no new eye generation**.
 
 Suggested eye prompt: “Edit this exact supplied sprite: [open/close] the eyes naturally while preserving the character, eyelash style, facial expression, brows, hair strands, skin, mouth, pose and framing. Change nothing else.”
 
