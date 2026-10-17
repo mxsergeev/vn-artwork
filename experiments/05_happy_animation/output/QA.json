@@ -1,0 +1,27 @@
+{
+  "00_original_happy": {
+    "changed_pixels": 0,
+    "changed_outside_masks": 0,
+    "alpha_identical": true
+  },
+  "01_happy_normal": {
+    "changed_pixels": 3208,
+    "changed_outside_masks": 0,
+    "alpha_identical": true
+  },
+  "02_happy_blink": {
+    "changed_pixels": 0,
+    "changed_outside_masks": 0,
+    "alpha_identical": true
+  },
+  "03_happy_talking": {
+    "changed_pixels": 3910,
+    "changed_outside_masks": 0,
+    "alpha_identical": true
+  },
+  "04_happy_blink_talking": {
+    "changed_pixels": 702,
+    "changed_outside_masks": 0,
+    "alpha_identical": true
+  }
+}

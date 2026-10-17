@@ -1,0 +1,23 @@
+# Python / local tooling
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+
+# OS / editor files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Regenerable output from the historical experiments
+/experiments/01_aligned_happy_blink/output/
+/experiments/02_independent_donors/output/
+/experiments/03_palette_retry/output/
+/experiments/04_source_anchored_animation/output/
+/static/vn_expression_sprites/
+/static/vn_expression_faces_preview.png
+/static/vn_expression_fullbody_preview.png
+
+# Experiment 05's curated output is intentionally versioned.
