@@ -1,8 +1,20 @@
-# Experiment 14 — Angry blink and speech
+# Experiment 14 — Angry animation
 
-Adds four source-anchored animation states to `static/sprites/05_angry.png`. The original teeth-baring expression is reused for talking; a small image-edited closed-mouth donor supplies idle. The closed-eye donor is kept separate, and both feature masks preserve the angry brows, hair, and source alpha.
+The reviewed Angry animation uses the original sprite for the face, hair, brows, and open-mouth expression. Its closed-eye state uses a source-matched closed-eye donor, saved only as the small eye-area crop `assets/eyes_closed_angry_patch.png`.
 
-Run `python experiments/14_angry_animation/build.py` from the repository root. Frames, GIFs, mask overlays, changed-boundary reviews, and QA are written to ignored `output/`.
+## Selected blink method
 
+`build.py` first creates the standard Angry states, then `angry_visual_blink.py` replaces the blink states with the reviewed eye-local composite:
 
-Mask iteration: an earlier left-eye keep-out crossed the source upper lashes. That strip was removed, then Angry's down-angled upper-lash arcs were traced separately. The right-eye contour now ends before the outer hair strand; a narrow dark-pixel trace retains the angry brow above the closed eye. Reviewed source, donor, result, mask overlay, and changed boundary at 22×, plus all four states at face scale. Current eye-mask pixel counts: 1,160 image-left and 1,128 image-right; protected hair pixels are unchanged in all four states.
+1. Place the cropped donor at its original source coordinates; do not transform the whole donor patch.
+2. Replace only the two eye-local regions with donor skin, using a small local skin-color correction.
+3. Restore the original brow and crossing hair strokes as separate foreground layers.
+4. Composite the donor's closed-lid lines over the repaired skin, preserving hair that crosses the eye.
+5. Create `blink_talking.png` by applying only the blink's changed eye pixels to the existing idle-mouth state.
+6. Regenerate the experiment GIFs from the four resulting states.
+
+Run `python experiments/14_angry_animation/build.py` from the repository root. It writes candidates and review files to the ignored `output/` directory. Copy reviewed states to `static/animation/angry/` only after visual review; regenerate published GIF previews with `python experiments/build_animation_previews.py`.
+
+## Review status
+
+The user visually approved the eye-only blink candidate on 2026-10-18. Review compared the source, prior blink, and new composite at face scale and high zoom. The new candidate removes the open irises, keeps the angry brows and crossing hair in place, and avoids the previous broad skin/hair shift and blurred repair. Integrity checks remain separate from visual approval and do not establish image quality.

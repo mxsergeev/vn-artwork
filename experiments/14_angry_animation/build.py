@@ -3,6 +3,7 @@ from pathlib import Path
 import sys
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from animation_builder import build
+from angry_visual_blink import apply_to_states
 
 build({
     "experiment": "14_angry_animation",
@@ -44,5 +45,6 @@ build({
     "mouth_polygon": [(520,182),(523,178),(531,176),(543,176),(555,179),(562,183),(564,190),(562,197),(557,202),(549,205),(539,204),(530,202),(524,198),(521,191)],
     "eye_sample_region": [460, 118, 606, 166],
     "mouth_sample_region": [515, 176, 570, 215],
-    "notes": "Angry keeps the original teeth-baring expression for talking. Distinct upper-lash contours and per-eye vertical bounds close each eye beneath the furrowed brows; the dark brow trace is restored. The 20x comparisons show the preserved brow and the complete closed lash.",
+    "notes": "Angry keeps the original teeth-baring expression for talking. The final blink uses a source-matched closed-eye donor, eye-local skin replacement, and separately restored source brow and hair foreground. Visual review is required; static mask checks do not establish quality.",
 })
+apply_to_states()
