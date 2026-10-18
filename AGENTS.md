@@ -1,18 +1,9 @@
-For every task in this repository, read [README.md](README.md) before starting work and follow its procedure throughout the task.
+# Repository instructions
 
-## Mandatory independent sprite/transplant review
+Read [README.md](README.md) to identify the task and its shortest relevant workflow. Consult [EDITING_TECHNIQUES.md](EDITING_TECHNIQUES.md) only for editing details, and an experiment README when working on that experiment.
 
-Before declaring any new or transplanted sprite complete or publishing it, request a separate Codex subagent with **model `gpt-6-luna` and reasoning effort `xhigh`**. If that configuration is unavailable, do not mark the artwork complete; report that the required review could not be run.
+**Visual quality comes first.** Preserve artwork outside the requested edit, inspect the actual images at native and enlarged scales, and fix visible defects before declaring completion. Do not treat scripts, masks or hashes as proof of visual quality.
 
-Give the reviewer the exact candidate build identity and paths to the master/source, every donor used, final sprite or states, aligned donor, selection overlays, actual compositing stages, native-scale face comparison, and decoded animation frames when applicable. Include intended expression and display size. Do not give it the builder's pass/fail claims or explanation of why the result should be correct. It must open and visually inspect the images itself.
+Work on candidates without destroying the last good version. Do not invent image-reference tool arguments, approvals, reviews, or accessible file links. Verify GitHub publication when requested.
 
-Require a **pass**, **fail**, or **uncertain** verdict for each candidate. The reviewer must assess naturalness and look for clipping, overflow, smearing, doubled or ghosted features, broken contours, mismatched joins, wrong expression states, and animation jumps. A clear visible defect is a fail; uncertain does not pass.
-
-For every failure or uncertainty, the reviewer must provide:
-
-- The image and stage where the problem first appears.
-- Coordinates in the master canvas, with the coordinate frame stated.
-- A separately saved, enlarged crop or image marked to point at the defect.
-- A short description of what looks wrong and why.
-- A proposed correction tied to the relevant technique in README.md, such as correcting landmark alignment, changing the patch boundary, repairing the old-feature background, restoring a complete intended strand, or rejecting an incompatible donor.
-
+**No independent reviewer, subagent, or particular model is required.** Use a self-inspection and the existing publishing checks when publishing animations. Do not add process requirements to a small image repair.
