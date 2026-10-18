@@ -1,8 +1,26 @@
-# Experiment 16 — Sad blink and speech
+# Sad animation
 
-Adds four source-anchored animation states to `static/sprites/07_sad.png`. The original downturned mouth remains idle; an image-edited slightly open donor supplies talking. The eye contour avoids the lower tearful shading, and both feature masks preserve the brows, hair, alpha, and untouched source pixels.
+| Status record | Current information |
+|---|---|
+| Master | `static/sprites/07_sad.png` |
+| Usable donors | `assets/eyes_closed_patch.png` and `assets/mouth_variant_patch.png`; geometry in build.py. |
+| Status | Existing default-pose set. |
+| Current build | Ignored `output/build.json` after the command below; published identity is recorded alongside the static assets. |
+| Defects | No new defect assessment in this cleanup; read existing artwork before changing it. |
+| Visual review | Prior README reports source/donor/result review at 22×; retained as historical evidence. |
+| User approval | Not recorded for a new candidate. |
+| Next action | Inspect the existing set before deciding whether any edit is necessary. |
 
-Run `python experiments/16_sad_animation/build.py` from the repository root. Frames, GIFs, mask overlays, changed-boundary reviews, and QA are written to ignored `output/`.
+## Local method
 
+Original downturned mouth remains idle; eye contour retains intentional tearful shading.
 
-Mask iteration: an earlier left-eye keep-out crossed the source upper lashes. It was removed, then Sad's drooped upper-lash arcs and outer tips were traced per eye, with the lower boundary held above tearful shading. Brows and the right outer hair strand stay source-identical. Reviewed source, donor, result, mask overlay, and changed boundary at 22×, plus all four states at face scale. Current eye-mask pixel counts: 1,240 image-left and 1,189 image-right; protected hair pixels are unchanged in all four states.
+## Command
+
+```sh
+python experiments/16_sad_animation/build.py
+```
+
+Writes the four standard PNG states, native GIFs, review images, declared regions, and a manifest to ignored `output/`. Historical output names remain available. Building does not publish.
+
+Follow the shared [workflow](../../README.md) and [techniques](../../EDITING_TECHNIQUES.md). Previous iteration measurements belong to [history](../../HISTORY.md), not acceptance criteria.

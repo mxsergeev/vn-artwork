@@ -1,11 +1,26 @@
-# Experiment 11 — refined Happy eyes (preferred)
+# Happy eye reference
 
-**Current best Happy result**, confirmed by visual comparison. Uses the **same eye donor** as experiments 05/09, but improves the result with narrower eye-specific contours: raised lower-right boundary, small separate left-lash extension, and selective protection of the original outer-right hair/skin pixels. The eyes changed 1,489 source pixels versus 1,860 in experiment 09, without the earlier obvious clipping.
+| Status record | Current information |
+|---|---|
+| Master | `static/sprites/02_happy.png` |
+| Usable donors | `../05_happy_animation/assets/ai_open_eyes_candidate.png` and `../09_happy_imagen_mouth/assets/closed_smile_patch.png`. |
+| Status | Established Happy reference, using the mouth donor from 09. |
+| Current build | Ignored `output/build.json` after the command below; published identity is recorded alongside the static assets. |
+| Defects | No new defect assessment in this cleanup; read existing artwork before changing it. |
+| Visual review | Historically reviewed; no fresh artwork acceptance performed in this cleanup. |
+| User approval | Not recorded for a new candidate. |
+| Next action | Use this builder for a new Happy candidate; review final PNGs and decoded GIFs. |
 
-Mouth behavior is unchanged from experiment 09: AI-edited natural closed smile at idle, original open Happy mouth while speaking. This script references the shared eye donor from experiment 05 and the **small, source-anchored mouth patch** from experiment 09, rather than duplicating full-body PNGs.
+## Local method
 
-Run: `python experiments/11_happy_eye_refined/build.py`. Review generated `output/` frames, mask overlays, and all GIFs; numerical QA is necessary but insufficient. Coordinates are specific to this source/donor pair.
+Independent eye contours, local tone matching, and a constrained outer-edge preservation rule. Source already supplies blink_talking.
 
+## Command
 
+```sh
+python experiments/11_happy_eye_refined/build.py
+```
 
-Mask iteration: raised the lower-left boundary to keep the small under-eye skin warp outside the edit; the open-eye transplant changes 1,384 pixels.
+Writes the four standard PNG states, native GIFs, review images, declared regions, and a manifest to ignored `output/`. Historical output names remain available. Building does not publish.
+
+Follow the shared [workflow](../../README.md) and [techniques](../../EDITING_TECHNIQUES.md). Previous iteration measurements belong to [history](../../HISTORY.md), not acceptance criteria.

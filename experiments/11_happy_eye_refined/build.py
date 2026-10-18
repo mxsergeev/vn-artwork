@@ -6,6 +6,9 @@ while preserving full lash shape and the image-model closed-smile mouth donor fr
 """
 import json
 from pathlib import Path
+import sys
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from artwork_tools import finish_animation
 import cv2
 import numpy as np
 from PIL import Image, ImageDraw
@@ -174,4 +177,13 @@ arr=np.array(bg); arr[boundary]=[0,255,0,255]
 Image.fromarray(arr,'RGBA').crop((450,115,607,216)).resize((942,606), Image.Resampling.NEAREST).save(OUT/'changed_boundary.png', optimize=True)
 (OUT/'QA.json').write_text(json.dumps(qa, indent=2)+'\n')
 print(json.dumps(qa, indent=2))
+
+finish_animation(OUT, ROOT/'static/sprites/02_happy.png',
+    dict(zip(('idle', 'blink', 'talking', 'blink_talking'),
+             (idle, blink_idle, speaking, blink_speaking))),
+    {'idle': allowed, 'blink': mouth_raw > 0, 'talking': (eye_mask > 0) | preserve_mask,
+     'blink_talking': np.zeros((H, W), bool)},
+    inputs=[ROOT/'experiments/05_happy_animation/assets/ai_open_eyes_candidate.png',
+            ROOT/'experiments/09_happy_imagen_mouth/assets/closed_smile_patch.png'],
+    scripts=[Path(__file__)], reviews=['four_states_face_comparison.png', 'feature_masks.png', 'changed_boundary.png'])
 

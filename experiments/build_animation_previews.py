@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-"""Rebuild full-resolution published GIF previews from the four PNG states."""
+"""Render candidate GIFs from four PNG states; publication is a separate command."""
+import argparse
 from pathlib import Path
 
 from PIL import Image, ImageDraw, ImageFont
@@ -42,13 +43,16 @@ def load_font(size: int) -> ImageFont.ImageFont:
     return ImageFont.load_default()
 
 
-def read_state(slug: str, state: str) -> Image.Image:
-    path = ANIMATION_DIR / slug / f"{state}.png"
+def read_png(path: Path) -> Image.Image:
     with Image.open(path) as image:
         image.load()
         if image.size != SIZES or image.mode != "RGBA":
             raise AssertionError(f"{path}: expected {SIZES} RGBA, got {image.size} {image.mode}")
         return image.copy()
+
+
+def read_state(slug: str, state: str) -> Image.Image:
+    return read_png(ANIMATION_DIR / slug / f"{state}.png")
 
 
 def flatten(image: Image.Image) -> Image.Image:
@@ -88,12 +92,14 @@ def save_gif(path: Path, frames: list[Image.Image], durations: tuple[int, ...]) 
         if check.size != size or check.n_frames != len(frames):
             raise AssertionError(f"{path}: bad GIF output {check.size}, {check.n_frames} frames")
     temporary.replace(path)
-    print(f"{path.relative_to(ROOT)}: {size[0]}×{size[1]}, {len(frames)} frames")
+    display = path.relative_to(ROOT) if path.is_relative_to(ROOT) else path
+    print(f"{display}: {size[0]}×{size[1]}, {len(frames)} frames")
 
 
-def build_expression_gifs(slug: str) -> None:
-    states = {name: flatten(read_state(slug, name)) for name in ("idle", "blink", "talking", "blink_talking")}
-    folder = ANIMATION_DIR / slug
+def render_state_gifs(source: Path, folder: Path) -> None:
+    """Render one set without changing its PNGs or any publication record."""
+    folder.mkdir(parents=True, exist_ok=True)
+    states = {name: flatten(read_png(source / f"{name}.png")) for name in ("idle", "blink", "talking", "blink_talking")}
     save_gif(folder / "blink.gif", [states[name] for name in BLINK], BLINK_DURATIONS)
     save_gif(folder / "talk.gif", [states[name] for name in TALK], TALK_DURATIONS)
     save_gif(folder / "combined.gif", [states[name] for name in COMBINED], COMBINED_DURATIONS)
@@ -128,7 +134,7 @@ def make_title_tile(size: tuple[int, int]) -> Image.Image:
     return tile
 
 
-def build_all_expressions_gif() -> None:
+def build_all_expressions_gif(destination: Path) -> None:
     face_w = (FACE_BOX[2] - FACE_BOX[0]) * FACE_SCALE
     face_h = (FACE_BOX[3] - FACE_BOX[1]) * FACE_SCALE
     tile_size = (face_w, face_h + LABEL_HEIGHT)
@@ -143,13 +149,22 @@ def build_all_expressions_gif() -> None:
             canvas.paste(make_face_tile(slug, state), (x, y))
         canvas.paste(title, (GAP + 2 * (tile_size[0] + GAP), GAP + 2 * (tile_size[1] + GAP)))
         frames.append(canvas)
-    save_gif(ANIMATION_DIR / "all_expressions.gif", frames, ALL_DURATIONS)
+    save_gif(destination / "all_expressions.gif", frames, ALL_DURATIONS)
 
 
 def main() -> None:
-    for slug in EXPRESSIONS:
-        build_expression_gifs(slug)
-    build_all_expressions_gif()
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--source', type=Path, help='Folder containing four candidate PNG states')
+    parser.add_argument('--output', type=Path, default=ROOT/'experiments/preview_output')
+    args = parser.parse_args()
+    if args.output.resolve().is_relative_to(ROOT/'static'):
+        parser.error('Render to a candidate folder; use publish_artwork.py for static assets')
+    if args.source:
+        render_state_gifs(args.source, args.output)
+    else:
+        for slug in EXPRESSIONS:
+            render_state_gifs(ANIMATION_DIR/slug, args.output/slug)
+        build_all_expressions_gif(args.output)
 
 
 if __name__ == "__main__":

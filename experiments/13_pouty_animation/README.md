@@ -1,8 +1,26 @@
-# Experiment 13 — Pouty blink and speech
+# Pouty animation
 
-Adds four source-anchored animation states to `static/sprites/04_pouty.png`. The original pout remains idle; image-edited closed-eye and open-mouth donors are cropped to the recorded source coordinates in `build.py` and transplanted through separate tight masks. Hair, brows, cheek shading, alpha, and all pixels outside those masks stay source-authoritative.
+| Status record | Current information |
+|---|---|
+| Master | `static/sprites/04_pouty.png` |
+| Usable donors | `assets/eyes_closed_patch.png` and `assets/mouth_variant_patch.png`; geometry in build.py. |
+| Status | Existing default-pose set. |
+| Current build | Ignored `output/build.json` after the command below; published identity is recorded alongside the static assets. |
+| Defects | No new defect assessment in this cleanup; read existing artwork before changing it. |
+| Visual review | Prior README reports source/donor/result review at 22×; retained as historical evidence. |
+| User approval | Not recorded for a new candidate. |
+| Next action | Inspect the existing set before deciding whether any edit is necessary. |
 
-Run `python experiments/13_pouty_animation/build.py` from the repository root. Frames, GIFs, mask overlays, changed-boundary reviews, and QA are written to ignored `output/`.
+## Local method
 
+Original pout remains idle; closed eyes and speaking mouth are transplanted separately.
 
-Mask iteration: the earlier left-eye horizontal keep-out crossed the source upper lashes and left open-eye ink visible. It was removed, then Pouty's shallow upper-lash arcs and outer tips were traced separately for both eyes. The outer-right contour stops at its protected hair strand. Reviewed source, donor, result, mask overlay, and changed boundary at 22×, plus all four states at face scale. Current eye-mask pixel counts: 1,225 image-left and 1,174 image-right; protected hair pixels are unchanged in all four states.
+## Command
+
+```sh
+python experiments/13_pouty_animation/build.py
+```
+
+Writes the four standard PNG states, native GIFs, review images, declared regions, and a manifest to ignored `output/`. Historical output names remain available. Building does not publish.
+
+Follow the shared [workflow](../../README.md) and [techniques](../../EDITING_TECHNIQUES.md). Previous iteration measurements belong to [history](../../HISTORY.md), not acceptance criteria.

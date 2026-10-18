@@ -1,0 +1,79 @@
+{
+  "schema_version": 1,
+  "provenance": "existing_snapshot",
+  "source": {
+    "path": "static/sprites/08_strained_smile.png",
+    "sha256": "fa1488dc2dc9ee72d75c2d2f26f7d0cdd1033ee666ddcae3f3a92d66b5bfd343"
+  },
+  "inputs": {
+    "static/sprites/08_strained_smile.png": "fa1488dc2dc9ee72d75c2d2f26f7d0cdd1033ee666ddcae3f3a92d66b5bfd343"
+  },
+  "scripts": {},
+  "runtime": {
+    "python": "3.12.14",
+    "pillow": "12.3.0",
+    "numpy": "2.5.4",
+    "opencv": "5.0.0"
+  },
+  "states": {
+    "idle": "idle.png",
+    "blink": "blink.png",
+    "talking": "talking.png",
+    "blink_talking": "blink_talking.png"
+  },
+  "regions": {},
+  "reviews": [],
+  "deliverables": [
+    "blink.gif",
+    "blink.png",
+    "blink_talking.png",
+    "combined.gif",
+    "idle.png",
+    "talk.gif",
+    "talking.png"
+  ],
+  "artifacts": {
+    "blink.gif": "5136224c0350c1b30f22cb156b5543788706b2a575ab2596e34af006e74a9135",
+    "blink.png": "9c8e5bc8cea3125428c90689ac871b66b42dcb8c35cdadb2553b0ff1cc3231bc",
+    "blink_talking.png": "4265eb7253a77036e004348672e1876013dfc004728aee23bf31e6a4c513ae60",
+    "combined.gif": "de5f8e85b7553abf2490af4b754988624955df3e510917fae38651e75f8eb7db",
+    "idle.png": "f453bb9a2250e4510c0a430f2255bc5a44503069c1af37adcbaf55931066bb08",
+    "talk.gif": "d5dd231c4c2f8d73c2bb2e8be07dd4f16436502ae5c63fa35f15ed36b9fec725",
+    "talking.png": "5b7d6eef31614c749adfaa65c79f31d91cbf3cea6269d856600fdde72496b84b"
+  },
+  "artifact_set_sha256": "801b8160eb3c671d383db73add34ca3b8cecbd548537470eff893db16d9d90ec",
+  "artwork_sha256": "801b8160eb3c671d383db73add34ca3b8cecbd548537470eff893db16d9d90ec",
+  "notes": "Snapshot of existing files at 849737b. Historical build inputs and edit regions have not been reconstructed; runtime describes this inventory, not the original generation. No fresh visual approval inferred.",
+  "build_id": "00db0959cd05e12de602c846574be3e937afe6f54fb4e1917fd5475d5ef53fa1",
+  "visual_review": {
+    "status": "historical_report",
+    "note": "Earlier experiment notes report visual review; no new artwork assessment in this cleanup.",
+    "artifact_set_sha256": "801b8160eb3c671d383db73add34ca3b8cecbd548537470eff893db16d9d90ec"
+  },
+  "user_approval": {
+    "status": "not_recorded"
+  },
+  "integrity": {
+    "status": "pass",
+    "states": {
+      "idle": {
+        "alpha_matches_source": true,
+        "outside_declared_regions": null
+      },
+      "blink": {
+        "alpha_matches_source": true,
+        "outside_declared_regions": null
+      },
+      "talking": {
+        "alpha_matches_source": true,
+        "outside_declared_regions": null
+      },
+      "blink_talking": {
+        "alpha_matches_source": true,
+        "outside_declared_regions": null
+      }
+    },
+    "containment": "not_recorded",
+    "visual_quality_certified": false
+  }
+}

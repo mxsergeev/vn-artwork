@@ -7,6 +7,9 @@ Goals:
 - preserve the approved talking frame exactly.
 """
 from pathlib import Path
+import sys
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from artwork_tools import finish_animation
 import json
 import cv2
 import numpy as np
@@ -140,4 +143,14 @@ arr2 = np.array(base_bg)
 arr2[boundary] = [0,255,0,255]
 Image.fromarray(arr2,'RGBA').crop((450,120,605,173)).resize((930,318), Image.Resampling.NEAREST).save(OUT/'changed_boundary.png', optimize=True)
 print(json.dumps(report, indent=2))
+
+mouth_region = np.zeros((H, W), bool)
+mouth_region[174:222, 505:582] = True
+finish_animation(OUT, ROOT/'static/sprites/01_neutral_worried.png',
+    {'idle': BASE, 'blink': blink, 'talking': TALK, 'blink_talking': combined},
+    {'idle': np.zeros((H, W), bool), 'blink': mask > 0,
+     'talking': mouth_region, 'blink_talking': (mask > 0) | mouth_region},
+    inputs=[ROOT/'experiments/04_source_anchored_animation/assets/eyes_closed_donor.png',
+            ROOT/'experiments/04_source_anchored_animation/assets/approved_talking.png'],
+    scripts=[Path(__file__)], reviews=['eyes_8x_inspection.png', 'feature_masks.png', 'changed_boundary.png'])
 

@@ -1,22 +1,25 @@
-# Experiment 14 — Angry animation
+# Angry — layered composition reference
 
-The reviewed Angry animation uses the original sprite for the face, hair, brows, and open-mouth expression. Its closed-eye state uses a source-matched closed-eye donor, saved only as the small eye-area crop `assets/eyes_closed_angry_patch.png`.
+| Status record | Current information |
+|---|---|
+| Master | `static/sprites/05_angry.png` |
+| Usable donors | `assets/eyes_closed_angry_patch.png` for the selected blink; `mouth_variant_patch.png` for idle. The older eye crop remains an input to the legacy first pass. |
+| Current build | `output/build.json` after building; current published identity is `static/animation/angry/build.json`. |
+| Defects | Earlier mouth-state swap, lost first-eye repair, and stale review ordering were corrected in 0d5e99d. |
+| Visual review | Source / previous / corrected result were compared at face scale and enlarged feature scale. |
+| User approval | User accepted the corrected result on 2026-10-18: “Yeah, this looks better. Commit only THESE changes and push.” Approval applies to that result. |
+| Next action | Use its layer separation as a reference; rebuild only when a candidate is needed. |
 
-## Selected blink method
+## Local method
 
-`build.py` first creates the standard Angry states, then `angry_visual_blink.py` replaces the blink states with the reviewed eye-local composite:
+The generic pass supplies the original speaking source and closed-mouth idle. `angry_visual_blink.py` then uses the source-matched eye crop at `(460,112,606,176)`: eye-local skin replacement, donor lid insertion, and source brows/crossing hair restored last. The second eye starts from the first eye's repaired result.
 
-1. Place the cropped donor at its original source coordinates; do not transform the whole donor patch.
-2. Replace only the two eye-local regions with donor skin, using a small local skin-color correction.
-3. Restore the original brow and crossing hair strokes as separate foreground layers.
-4. Composite the donor's closed-lid lines over the repaired skin, preserving hair that crosses the eye.
-5. Create `blink_talking.png` by applying only the blink's changed eye pixels to the existing idle-mouth state.
-6. Regenerate the experiment GIFs from the four resulting states.
+Apply those eye changes to idle for `blink.png` and to talking for `blink_talking.png`. Generate final reviews and GIFs before writing the manifest. `output/angry_layer_stages.png` shows the working layers. Reusable compositing/restoration operations come from `artwork_tools.py`; the geometry and tone-selection rules remain local.
 
-Run `python experiments/14_angry_animation/build.py` from the repository root. It writes candidates and review files to the ignored `output/` directory. Copy reviewed states to `static/animation/angry/` only after visual review; regenerate published GIF previews with `python experiments/build_animation_previews.py`.
+```sh
+python experiments/14_angry_animation/build.py
+```
 
-## Review status
+Writes candidates and review files to ignored `output/`. Historical before/after comparisons use current published frames only as a comparison baseline; they are not build inputs for the final states.
 
-The user visually approved the eye-only blink candidate on 2026-10-18. Review compared the source, prior blink, and new composite at face scale and high zoom. The new candidate removes the open irises, keeps the angry brows and crossing hair in place, and avoids the previous broad skin/hair shift and blurred repair. Integrity checks remain separate from visual approval and do not establish image quality.
-
-The final postprocessor applies the eye composite to the idle mouth for `blink.png` and to the speaking mouth for `blink_talking.png`. It restores the source brow and hair after drawing the lids, and records checksums only after writing the final states and review images. Each build saves before/after face, eye, and mouth sheets plus final source/donor/result reviews under `output/`. The published Angry PNGs and GIFs were refreshed from these final states.
+See the [workflow](../../README.md), [techniques](../../EDITING_TECHNIQUES.md), and explicit publication command there.

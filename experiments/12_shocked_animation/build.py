@@ -1,4 +1,7 @@
 from pathlib import Path
+import sys
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from artwork_tools import finish_animation
 import io
 import numpy as np
 from PIL import Image, ImageDraw, ImageFilter
@@ -159,3 +162,10 @@ boundary=changed & (np.asarray(changed_img.filter(ImageFilter.MinFilter(3)))==0)
 arr=np.array(base_bg); arr[boundary]=[0,255,0,255]
 Image.fromarray(arr,'RGBA').crop(box).resize(((box[2]-box[0])*scale,(box[3]-box[1])*scale),Image.Resampling.NEAREST).save(OUT/'changed_boundary.png')
 print({'dimensions': [W,H], 'blink_changed_pixels': int(changed.sum()), 'blink_outside_mask_pixels': int(np.count_nonzero(changed & (mask==0))), 'alpha_identical': bool(np.array_equal(out[:,:,3],BASE[:,:,3])), 'mouth_skin_offset': skin_offset.tolist(), 'talk_changed_pixels': int(np.count_nonzero(np.any(talk[:,:,:3]!=BASE[:,:,:3],axis=2))), 'combined_gifs': 3})
+
+finish_animation(OUT, ROOT/'static/sprites/03_shocked.png',
+    {'idle': BASE, 'blink': out, 'talking': talk, 'blink_talking': both},
+    {'idle': np.zeros((H, W), bool), 'blink': mask > 0,
+     'talking': mouth_weight > 0, 'blink_talking': (mask > 0) | (mouth_weight > 0)},
+    inputs=[HERE/'assets/eyes_closed_patch.png', HERE/'assets/open_mouth_patch.png'],
+    scripts=[Path(__file__)], reviews=['eyes_review.png', 'feature_mask.png', 'changed_boundary.png'])

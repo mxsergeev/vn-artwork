@@ -9,7 +9,6 @@ and preserves the neutral pose's alpha and all pixels outside those masks.
 from pathlib import Path
 import io
 import json
-import shutil
 import sys
 
 # Prefer the installed workspace-local image stack when it is present. The
@@ -19,6 +18,8 @@ ROOT = HERE.parents[1]
 LOCAL_PYTHON = ROOT / '.codex-python'
 if LOCAL_PYTHON.is_dir():
     sys.path.insert(0, str(LOCAL_PYTHON))
+sys.path.insert(0, str(ROOT/'experiments'))
+from artwork_tools import record_build, write_json
 
 import cv2
 import numpy as np
@@ -26,7 +27,6 @@ from PIL import Image, ImageDraw, ImageFilter
 
 ASSETS = HERE / 'assets'
 OUT = HERE / 'output'
-PUBLISHED = ROOT / 'static/animation/document_reading'
 OUT.mkdir(exist_ok=True)
 
 BASE = np.asarray(Image.open(ROOT / 'static/poses/document_reading/neutral.png').convert('RGBA'))
@@ -1417,20 +1417,6 @@ def save_foreground_hair_review():
     return path.name
 
 
-def publish_copy(source, destination):
-    """Copy through a workspace-local temp file; avoid Win32 CopyFile2 locks."""
-    source, destination = Path(source), Path(destination)
-    temporary = destination.with_name(destination.name + '.publish.tmp')
-    try:
-        with source.open('rb') as reader, temporary.open('wb') as writer:
-            shutil.copyfileobj(reader, writer, 1024 * 1024)
-        shutil.copystat(source, temporary)
-        temporary.replace(destination)
-    finally:
-        if temporary.exists():
-            temporary.unlink()
-
-
 def write_outputs(states):
     qa = {
         'size': [W, H],
@@ -1510,8 +1496,8 @@ def write_outputs(states):
     }
     for expression, group in states.items():
         qa['states'][expression] = {}
-        published_folder = PUBLISHED / expression
-        published_folder.mkdir(parents=True, exist_ok=True)
+        candidate_folder = OUT / expression
+        candidate_folder.mkdir(parents=True, exist_ok=True)
         for state, arr in group.items():
             assert arr.shape == BASE.shape
             assert np.array_equal(arr[:, :, 3], BASE[:, :, 3])
@@ -1531,7 +1517,7 @@ def write_outputs(states):
                 foreground_hair_changes, untracked_outside_feature,
             )
             save_png(OUT / f'{expression}_{state}.png', arr)
-            save_png(published_folder / f'{state}.png', arr)
+            save_png(candidate_folder / f'{state}.png', arr)
             qa['states'][expression][state] = {
                 'changed_pixels': int(changed.sum()),
                 'changed_outside_feature_masks': outside_feature,
@@ -1554,16 +1540,12 @@ def write_outputs(states):
                 ((505, 125, 640, 185), 2),
                 ((545, 182, 617, 230), 4),
             ])
-            publish_copy(gif_path, published_folder / gif_name)
             with Image.open(gif_path) as gif:
                 assert gif.size == (W, H), (gif_name, gif.size)
                 qa['gifs'][f'{expression}/{gif_name}'] = {'size': list(gif.size), 'frames': gif.n_frames}
-        if expression != 'neutral':
-            save_png(ROOT / f'static/poses/document_reading/{expression}.png', group['idle'])
 
     all_three_path = OUT / 'all_three_native.gif'
     save_all_three_gif(all_three_path, states)
-    publish_copy(all_three_path, PUBLISHED / all_three_path.name)
     with Image.open(all_three_path) as gif:
         assert gif.size == (W * 3 + 48, H), gif.size
         qa['gifs']['all_three_native.gif'] = {'size': list(gif.size), 'frames': gif.n_frames}
@@ -1582,7 +1564,32 @@ def write_outputs(states):
             'source': 'decoded shocked/combined.gif',
         }
     (OUT / 'QA.json').write_text(json.dumps(qa, indent=2) + '\n', encoding='utf-8')
-    publish_copy(OUT / 'preview_fullbody.jpg', PUBLISHED / 'preview.jpg')
+    for expression in states:
+        # Keep the expression's final review panels with its candidate record.
+        folder = OUT/expression
+        reviews = []
+        for feature in ('left_eye', 'right_eye', 'mouth'):
+            name = f'{expression}_{feature}_20x_review.png'
+            (folder/name).write_bytes((OUT/name).read_bytes())
+            reviews.append(name)
+        manifest = record_build(
+            folder, ROOT/'static/poses/document_reading/neutral.png',
+            inputs=sorted(ASSETS.glob('*.png')) + [ASSETS/'donor_alignment.json'],
+            scripts=[Path(__file__), ROOT/'experiments/artwork_tools.py'],
+            regions={state: allowed_masks[expression] for state in states[expression]},
+            reviews=reviews, notes='NOT APPROVED: unresolved eye seams and lash/hair artifacts; candidate only.',
+        )
+        manifest['user_approval'] = {'status': 'not_approved', 'artwork_sha256': manifest['artwork_sha256'],
+                                     'note': '849737b and user rejection: visible defects remain.'}
+        write_json(folder/'build.json', manifest)
+    montage = record_build(OUT, ROOT/'static/poses/document_reading/neutral.png', states={},
+                 inputs=[OUT/expression/'build.json' for expression in states],
+                 scripts=[Path(__file__), ROOT/'experiments/artwork_tools.py'],
+                 extra_artifacts=['all_three_native.gif', 'preview_fullbody.jpg'],
+                 notes='NOT APPROVED: three-expression candidate montage; per-expression records hold status.')
+    montage['user_approval'] = {'status': 'not_approved', 'artwork_sha256': montage['artwork_sha256'],
+                                'note': 'Unresolved defects; not approved for release.'}
+    write_json(OUT/'build.json', montage)
     print(json.dumps(qa, indent=2))
 
 

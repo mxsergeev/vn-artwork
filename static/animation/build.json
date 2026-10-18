@@ -1,0 +1,45 @@
+{
+  "schema_version": 1,
+  "provenance": "existing_snapshot",
+  "source": {
+    "path": "static/sprites/01_neutral_worried.png",
+    "sha256": "bfe17f0edd72801cfa1c1592bb255f2474b11ba2c31bceb11cd7262c88f72fcc"
+  },
+  "inputs": {
+    "static/sprites/01_neutral_worried.png": "bfe17f0edd72801cfa1c1592bb255f2474b11ba2c31bceb11cd7262c88f72fcc"
+  },
+  "scripts": {},
+  "runtime": {
+    "python": "3.12.14",
+    "pillow": "12.3.0",
+    "numpy": "2.5.4",
+    "opencv": "5.0.0"
+  },
+  "states": {},
+  "regions": {},
+  "reviews": [],
+  "deliverables": [
+    "all_expressions.gif",
+    "preview.jpg"
+  ],
+  "artifacts": {
+    "all_expressions.gif": "739d542d67be08eb59c96b52a262fa9a988b0dca442f5bb12c0cadd000a8d202",
+    "preview.jpg": "445aca5b94ac889760429e638deb0d48a8c21a76da1a489a6d594ebe6e49c57b"
+  },
+  "artifact_set_sha256": "a2518a86d71f6ed739b0841c17dc2148703938a04af37b1c7df8f80cd4497a50",
+  "artwork_sha256": "a2518a86d71f6ed739b0841c17dc2148703938a04af37b1c7df8f80cd4497a50",
+  "notes": "Existing default-pose montage/index snapshot; no fresh generation or artwork approval inferred.",
+  "build_id": "492df84642d8c48381811516e213128dbd91e205115351be92b8387e4439dd07",
+  "visual_review": {
+    "status": "unreviewed"
+  },
+  "user_approval": {
+    "status": "not_recorded"
+  },
+  "integrity": {
+    "status": "pass",
+    "states": {},
+    "containment": "not_recorded",
+    "visual_quality_certified": false
+  }
+}

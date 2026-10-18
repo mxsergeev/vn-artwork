@@ -7,6 +7,7 @@ import json
 import cv2
 import numpy as np
 from PIL import Image, ImageDraw
+from artwork_tools import composite, restore_foreground, record_build, save_stage_review
 
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parents[1]
@@ -67,16 +68,15 @@ def make_closed_blink() -> np.ndarray:
         delta = np.clip(delta, -8, 8).astype(np.float32)
         adjusted = donor[:, :, :3].astype(np.float32).copy()
         adjusted[skin(donor[:, :, :3])] += delta
-        a = alpha[:, :, None]
-        out = base.copy()
-        out[:, :, :3] = np.rint(base[:, :, :3].astype(np.float32) * (1-a) +
-                                np.clip(adjusted, 0, 255) * a).clip(0, 255).astype(np.uint8)
-        return out
+        corrected = donor.astype(np.float32)
+        corrected[:, :, :3] = np.clip(adjusted, 0, 255)
+        return composite(base, corrected, alpha)
 
     left = polygon_mask(source.shape[1::-1], LEFT_REGION)
     right = polygon_mask(source.shape[1::-1], RIGHT_REGION)
     result = transfer_skin(source, left)
     result = transfer_skin(result, right)
+    repaired = result.copy()
 
     # Place the closed lid lines over the repaired skin.
     lids = polygon_mask(source.shape[1::-1], LID_POLYGONS)
@@ -95,9 +95,12 @@ def make_closed_blink() -> np.ndarray:
         core = traced & dark
         grown = cv2.dilate(core.astype(np.uint8), np.ones((3, 3), np.uint8)) > 0
         restore = grown & cv2.dilate(traced.astype(np.uint8), np.ones((3, 3), np.uint8)).astype(bool)
-        result[restore, :3] = source[restore, :3]
+        result = restore_foreground(result, source, restore.astype(np.float32))
 
     result[:, :, 3] = source[:, :, 3]
+    save_stage_review(OUT/'angry_layer_stages.png',
+                      {'source': source, 'donor': donor, 'skin repaired': repaired, 'final': result},
+                      (460, 112, 606, 176), scale=6)
     return result
 
 
@@ -322,6 +325,19 @@ def apply_to_states(before_states=None) -> None:
     save_gif(OUT / "combined.gif",
              [idle, talking, idle, blink_idle, idle, talking, blink_talking, talking, idle],
              [450, 220, 300, 130, 430, 220, 130, 240, 1100])
+    # The mouth contour is declared by the builder, not inferred from changed pixels.
+    mouth = polygon_mask(source.shape[1::-1], [[
+        (520,182),(523,178),(531,176),(543,176),(555,179),(562,183),(564,190),
+        (562,197),(557,202),(549,205),(539,204),(530,202),(524,198),(521,191),
+    ]])
+    record_build(OUT, SOURCE, inputs=sorted((HERE/'assets').glob('*.png')),
+                 scripts=[HERE/'build.py', Path(__file__), ROOT/'experiments/animation_builder.py',
+                          ROOT/'experiments/artwork_tools.py'],
+                 regions={'idle': mouth, 'talking': np.zeros_like(mouth),
+                          'blink': eye_area | mouth, 'blink_talking': eye_area},
+                 reviews=['left_eye_20x_review.png', 'right_eye_20x_review.png',
+                          'four_states_face_comparison.png', 'angry_layer_stages.png'],
+                 notes='Layered Angry reference; record final artifacts after all postprocessing.')
 
 
 if __name__ == "__main__":

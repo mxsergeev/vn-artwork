@@ -1,9 +1,26 @@
-# Experiment 09 — Happy closed-smile donor
+# Happy mouth reference
 
-Replaces the distorted Python-compressed idle smile with a source-anchored AI-edited **closed smile**. The original Happy mouth remains the speaking frame. Reuses the eye donor already stored in experiment 05.
+| Status record | Current information |
+|---|---|
+| Master | `static/sprites/02_happy.png` |
+| Usable donors | Existing open-eye donor from experiment 05 and `assets/closed_smile_patch.png`. |
+| Status | Reference for the closed-smile donor; experiment 11 supersedes its eye treatment. |
+| Current build | Ignored `output/build.json` after the command below; published identity is recorded alongside the static assets. |
+| Defects | No new defect assessment in this cleanup; read existing artwork before changing it. |
+| Visual review | Historical visual assessment; no new review in this cleanup. |
+| User approval | Not recorded for this exact build. |
+| Next action | Use 11 for production Happy eyes; use this builder to reproduce the mouth method. |
 
-**Source:** `static/sprites/02_happy.png`. **Mouth donor:** `assets/closed_smile_patch.png` (the exact 67×55 RGB crop at x=510–576, y=165–219 from the edited full-body donor). The full-body donor was deliberately not duplicated; the crop reproduces the original experiment pixel-for-pixel.
+## Local method
 
-Run from the repository root: `python experiments/09_happy_imagen_mouth/build.py`.
+The generated closed smile replaces the earlier compressed mouth. The original closed eyes/open smile remain blink_talking.
 
-The script generates four mouth/eye states, animated previews, mask overlays, and QA into `output/` (ignored by Git). **The masks are specific to this image; do not reuse their coordinates blindly.** The cleaner Happy eye masks are in experiment 11.
+## Command
+
+```sh
+python experiments/09_happy_imagen_mouth/build.py
+```
+
+Writes the four standard PNG states, native GIFs, review images, declared regions, and a manifest to ignored `output/`. Historical output names remain available. Building does not publish.
+
+Follow the shared [workflow](../../README.md) and [techniques](../../EDITING_TECHNIQUES.md). Previous iteration measurements belong to [history](../../HISTORY.md), not acceptance criteria.

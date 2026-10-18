@@ -1,3 +1,5 @@
+> **Historical prototype.** The mouth method was superseded by 09 and the eye treatment by 11. Its `assets/ai_open_eyes_candidate.png` remains an input to both later builders. Keep the assets at this path. Start new work at the [current workflow](../../README.md); the notes below describe the old prototype.
+
 # Happy animation — experiment 05
 
 **Status:** promising prototype, not approved as a final sprite.

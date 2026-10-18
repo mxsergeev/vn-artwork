@@ -1,0 +1,81 @@
+{
+  "schema_version": 1,
+  "provenance": "existing_snapshot",
+  "source": {
+    "path": "static/sprites/05_angry.png",
+    "sha256": "01fab17faa9095f2ee2181d42a88316c406454d99378e34c34f1b7a88e9748ce"
+  },
+  "inputs": {
+    "static/sprites/05_angry.png": "01fab17faa9095f2ee2181d42a88316c406454d99378e34c34f1b7a88e9748ce"
+  },
+  "scripts": {},
+  "runtime": {
+    "python": "3.12.14",
+    "pillow": "12.3.0",
+    "numpy": "2.5.4",
+    "opencv": "5.0.0"
+  },
+  "states": {
+    "idle": "idle.png",
+    "blink": "blink.png",
+    "talking": "talking.png",
+    "blink_talking": "blink_talking.png"
+  },
+  "regions": {},
+  "reviews": [],
+  "deliverables": [
+    "blink.gif",
+    "blink.png",
+    "blink_talking.png",
+    "combined.gif",
+    "idle.png",
+    "talk.gif",
+    "talking.png"
+  ],
+  "artifacts": {
+    "blink.gif": "0883e451fa8c21de61ea5f3ff9409facec7f6f92ba0107a81e1d9f4189c8e197",
+    "blink.png": "1ed37f2b7fa24ad47831b58f00a306dfc066da53c576e7f8eaa5c0aca175f95f",
+    "blink_talking.png": "75cce043e04ad2f2a1e51413388e4420e3019c87ec227d1c1d1f3aff2890078d",
+    "combined.gif": "60039863735aa2a94fbb8a40a715d9b112859a521a732e9fc131a0202c0b8d30",
+    "idle.png": "af4cf43f947acdbe6322a90462225f8c6c8398ea66ca0863df466a82788edcea",
+    "talk.gif": "d429c5c39be9604c2b8ac3346da46199c357c9bcb7b70b0a29d9d1e7dba68b1b",
+    "talking.png": "15c468f2a8787bdbe7857f3bbd31133839fa349c29a1a9aa91b5ca709b66fc6a"
+  },
+  "artifact_set_sha256": "dc758a4ca3c8079018ff7370c7567bd529ba39e28d8ee614484cc37efa4cd9ca",
+  "artwork_sha256": "dc758a4ca3c8079018ff7370c7567bd529ba39e28d8ee614484cc37efa4cd9ca",
+  "notes": "Snapshot of existing files at 849737b. Historical build inputs and edit regions have not been reconstructed; runtime describes this inventory, not the original generation. No fresh visual approval inferred.",
+  "build_id": "edfd397c2aafed13fe11cf8b22ca4a48361dd81d3ef260f8ffb21163d1604f5b",
+  "visual_review": {
+    "status": "historical_report",
+    "note": "Earlier experiment notes report visual review; no new artwork assessment in this cleanup.",
+    "artifact_set_sha256": "dc758a4ca3c8079018ff7370c7567bd529ba39e28d8ee614484cc37efa4cd9ca"
+  },
+  "user_approval": {
+    "status": "approved",
+    "note": "2026-10-18: User accepted the corrected 0d5e99d artwork: Yeah, this looks better. Commit only THESE changes and push.",
+    "artwork_sha256": "dc758a4ca3c8079018ff7370c7567bd529ba39e28d8ee614484cc37efa4cd9ca"
+  },
+  "integrity": {
+    "status": "pass",
+    "states": {
+      "idle": {
+        "alpha_matches_source": true,
+        "outside_declared_regions": null
+      },
+      "blink": {
+        "alpha_matches_source": true,
+        "outside_declared_regions": null
+      },
+      "talking": {
+        "alpha_matches_source": true,
+        "outside_declared_regions": null
+      },
+      "blink_talking": {
+        "alpha_matches_source": true,
+        "outside_declared_regions": null
+      }
+    },
+    "containment": "not_recorded",
+    "visual_quality_certified": false
+  }
+}

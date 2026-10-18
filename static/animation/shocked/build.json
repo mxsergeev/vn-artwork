@@ -1,0 +1,79 @@
+{
+  "schema_version": 1,
+  "provenance": "existing_snapshot",
+  "source": {
+    "path": "static/sprites/03_shocked.png",
+    "sha256": "bf54af2f2d173132027ba235c756b6c4a948141a1fcb36420fbbd402c8414e6c"
+  },
+  "inputs": {
+    "static/sprites/03_shocked.png": "bf54af2f2d173132027ba235c756b6c4a948141a1fcb36420fbbd402c8414e6c"
+  },
+  "scripts": {},
+  "runtime": {
+    "python": "3.12.14",
+    "pillow": "12.3.0",
+    "numpy": "2.5.4",
+    "opencv": "5.0.0"
+  },
+  "states": {
+    "idle": "idle.png",
+    "blink": "blink.png",
+    "talking": "talking.png",
+    "blink_talking": "blink_talking.png"
+  },
+  "regions": {},
+  "reviews": [],
+  "deliverables": [
+    "blink.gif",
+    "blink.png",
+    "blink_talking.png",
+    "combined.gif",
+    "idle.png",
+    "talk.gif",
+    "talking.png"
+  ],
+  "artifacts": {
+    "blink.gif": "6ddad0e300e3379c576b9b93d84562eb68fab9a844902e5975d26fca0aa2f44c",
+    "blink.png": "4e01a3667b6eb87a12a079b7fa0a88cc5a52d3a9fb831e25dea5a4de39b98c23",
+    "blink_talking.png": "f369e409c717389a38382dd956431ae39333cedf440e65ec6b9ae24fe885d9cc",
+    "combined.gif": "b9a693f17906937cb0223ccd64a40ac6c0e4be57bdd52f6d7c8a7fdb9cb2bbae",
+    "idle.png": "bf54af2f2d173132027ba235c756b6c4a948141a1fcb36420fbbd402c8414e6c",
+    "talk.gif": "89fce15ac3ade58ddefc773ba288a699ffe6dce21558cddad68ca34d0168897a",
+    "talking.png": "085b36fa2e7c89264f4e4246d9c4b1caaeaff27010487e7a42c722f9c91ea773"
+  },
+  "artifact_set_sha256": "7257ee52b82f1881f7d85d1478d14fadc01fd8666c3aacab4a1ea353fd9e0175",
+  "artwork_sha256": "7257ee52b82f1881f7d85d1478d14fadc01fd8666c3aacab4a1ea353fd9e0175",
+  "notes": "Snapshot of existing files at 849737b. Historical build inputs and edit regions have not been reconstructed; runtime describes this inventory, not the original generation. No fresh visual approval inferred.",
+  "build_id": "8bff1bf59a3545b57f26b1476bb9bed815650d29a886176f2a32786dddd08c85",
+  "visual_review": {
+    "status": "historical_report",
+    "note": "Earlier experiment notes report visual review; no new artwork assessment in this cleanup.",
+    "artifact_set_sha256": "7257ee52b82f1881f7d85d1478d14fadc01fd8666c3aacab4a1ea353fd9e0175"
+  },
+  "user_approval": {
+    "status": "not_recorded"
+  },
+  "integrity": {
+    "status": "pass",
+    "states": {
+      "idle": {
+        "alpha_matches_source": true,
+        "outside_declared_regions": null
+      },
+      "blink": {
+        "alpha_matches_source": true,
+        "outside_declared_regions": null
+      },
+      "talking": {
+        "alpha_matches_source": true,
+        "outside_declared_regions": null
+      },
+      "blink_talking": {
+        "alpha_matches_source": true,
+        "outside_declared_regions": null
+      }
+    },
+    "containment": "not_recorded",
+    "visual_quality_certified": false
+  }
+}

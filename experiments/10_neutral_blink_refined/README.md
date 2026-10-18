@@ -1,11 +1,26 @@
-# Experiment 10 — refined Neutral blink
+# Neutral blink reference
 
-Refines experiment 04 with eyelid-following masks and a very small left-lash tip patch. The tip is limited to the eye/skin edge so it does not repaint adjacent hair. Original under-eye shading and the approved talking frame are preserved.
+| Status record | Current information |
+|---|---|
+| Master | `static/sprites/01_neutral_worried.png` |
+| Usable donors | `../04_source_anchored_animation/assets/eyes_closed_donor.png` and `approved_talking.png`. |
+| Status | Established Neutral reference. |
+| Current build | Ignored `output/build.json` after the command below; published identity is recorded alongside the static assets. |
+| Defects | No new defect assessment in this cleanup; read existing artwork before changing it. |
+| Visual review | Historically reviewed; new candidate builds require their own review. |
+| User approval | Talking artifact was historically approved; no blanket approval inferred. |
+| Next action | Build only when needed; compare candidate to the existing Neutral assets. |
 
-Reuses both original donor files from `experiments/04_source_anchored_animation/assets/`. No duplicate asset copies.
+## Local method
 
-Run: `python experiments/10_neutral_blink_refined/build.py`. Generated sprites, GIFs, mask and changed-boundary comparisons, and QA appear in ignored `output/`. Inspect those visually; pixel confinement alone is not approval.
+Retains the approved speaking frame, with separate eyelid contours and a targeted lash-tip extension.
 
+## Command
 
+```sh
+python experiments/10_neutral_blink_refined/build.py
+```
 
-After the 16x review, the earlier 9-pixel-wide lash patch was reduced to a 5-pixel contour around the visible tip. The generated 16x crop confirms the adjacent hair and the full eyelid remain intact; the final changed-pixel and alpha checks are in `output/qa.json`.
+Writes the four standard PNG states, native GIFs, review images, declared regions, and a manifest to ignored `output/`. Historical output names remain available. Building does not publish.
+
+Follow the shared [workflow](../../README.md) and [techniques](../../EDITING_TECHNIQUES.md). Previous iteration measurements belong to [history](../../HISTORY.md), not acceptance criteria.

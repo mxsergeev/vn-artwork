@@ -1,8 +1,8 @@
 # Research history and archived methods
 
-**Historical record only.** For new work, follow [README.md](README.md) and the successful experiments 09–11 instead. The notes below preserve early attempts, original prompts (where available), failures, and the proven static-expression method. Words such as "latest" or "current" in archived sections reflect their original time, not present recommendations.
+**Historical record only.** Current workflow and techniques are in [README.md](README.md) and [EDITING_TECHNIQUES.md](EDITING_TECHNIQUES.md). Archived recommendations describe their original context, not current acceptance rules.
 
-## A. Proven static-expression pipeline — use this
+## A. Original static-expression reproduction
 
 **Exact historical inputs (not re-created):**
 - Base RGBA sprite: `static/Melancholic Corporate Sci-Fi Officer.png` (1086×1448).
@@ -29,7 +29,7 @@ The exact historical palette image is preserved; it is more reliable than this r
 
 ## B. Archived animation failures — experiments 01–03
 
-The scripts in `experiments/01`–`03` reproduce unsuccessful approaches; **do not use their outputs as finished sprites.** They share the original sprites from `static/sprites/`. The newer pilot is in `experiments/04`.
+The scripts in `experiments/01`–`03` reproduce unsuccessful approaches; **do not use their outputs as finished sprites.** They share the original sprites from `static/sprites/`. Experiment 04 is a later historical pilot, also superseded.
 
 **01. Aligned happy donor** — `experiments/01_aligned_happy_blink/build.py`
 - Used existing neutral/happy sprite coordinates, per-eye polygons, protected foreground hair, short feather and conservative sampled skin color offsets.
@@ -103,3 +103,40 @@ Full layered puppets worked technically but required too much manual preparation
 - [Experiment 09](experiments/09_happy_imagen_mouth/README.md) replaced the Python-compressed Happy mouth with an image-model closed-smile donor.
 - [Experiment 10](experiments/10_neutral_blink_refined/README.md) substantially reduced Neutral's left-lash cutoff and under-eye patches using tighter, eyelid-shaped masks.
 - [Experiment 11](experiments/11_happy_eye_refined/README.md) applied the same disciplined mask refinement to Happy, using the **same eye donor** as earlier work. This is the preferred Happy animation example.
+
+## Document-reading failure — 849737b
+
+The user requested new Happy/Shocked eye donors and a better Neutral blink. The replacement donors improved the features, but subsequent transplantation retained visible skin seams, lash fragments, and rough hair joins. The user explicitly rejected the repair results and requested a **NOT APPROVED** WIP checkpoint.
+
+A later audit compared source, aligned donors, intermediate operations, PNGs, and decoded GIFs:
+
+- Saved repaired GIF versions 1–5 were byte-identical. Version 6 changed a single pixel in seven Happy open-eye frames; the two blink frames were unchanged.
+- At Neutral (544,150), source RGB (124,86,75) survived despite aligned donor skin (243,207,193). Neither the replacement nor foreground selection included it.
+- The proposed full-replacement correction changed no compositing weights for those masks.
+- Final lower-eye skin passes changed only 1 Neutral, 9 Happy, and 3 Shocked pixels. Their spatial/color filters could not repair the broader highlighted damage.
+- The final Happy one-pixel code edit and v6 GIF were not exported into the standard PNGs. Separate delivery paths made the current state harder to establish.
+- The agent repeatedly claimed improvement without demonstrating it in the actual marked output region.
+
+These facts establish ineffective operations and an unreliable visual feedback loop; counts are not quality scores. The donors contain useful clean features. Future work must locate each defect's originating stage, completely remove the unwanted source content, and prove the correction survives downstream layers and encoding. See the [current worked example](EDITING_TECHNIQUES.md#worked-failure-document-reading).
+
+The duplicate versioned GIFs remain local under the experiment's ignored output directory. Git retains the original WIP checkpoint; one compact diagnostic is kept as `experiments/13_document_reading_pose/failure_example.png`.
+
+## Archived mask-iteration measurements
+
+These measurements describe earlier builds and do not establish present visual quality. The old guide compared a Happy refinement changing 1,384 eye pixels with an earlier 1,860-pixel edit; another README recorded 1,489 for a different pass. Neither is a target or acceptance criterion.
+
+### Pouty animation
+
+Mask iteration: the earlier left-eye horizontal keep-out crossed the source upper lashes and left open-eye ink visible. It was removed, then Pouty's shallow upper-lash arcs and outer tips were traced separately for both eyes. The outer-right contour stops at its protected hair strand. Reviewed source, donor, result, mask overlay, and changed boundary at 22×, plus all four states at face scale. Current eye-mask pixel counts: 1,225 image-left and 1,174 image-right; protected hair pixels are unchanged in all four states.
+
+### Embarrassed animation
+
+Mask iteration: an earlier left-eye keep-out crossed the source upper lashes. It was removed, then Embarrassed's raised-eye upper-lash arcs and lifted outer tips were traced separately per eye. The raised brows, hair, blush, and cheek shading remain outside the masks. Reviewed source, donor, result, mask overlay, and changed boundary at 22×, plus all four states at face scale. Current eye-mask pixel counts: 1,212 image-left and 1,179 image-right; protected hair pixels are unchanged in all four states.
+
+### Sad animation
+
+Mask iteration: an earlier left-eye keep-out crossed the source upper lashes. It was removed, then Sad's drooped upper-lash arcs and outer tips were traced per eye, with the lower boundary held above tearful shading. Brows and the right outer hair strand stay source-identical. Reviewed source, donor, result, mask overlay, and changed boundary at 22×, plus all four states at face scale. Current eye-mask pixel counts: 1,240 image-left and 1,189 image-right; protected hair pixels are unchanged in all four states.
+
+### Strained-smile animation
+
+Mask iteration: an earlier left-eye keep-out crossed the source upper lashes. It was removed, then Strained Smile's compressed upper-lash arcs and outer tips were traced separately per eye. The lower edge preserves under-eye skin, and the right outer hair strand stays source-identical. Reviewed source, donor, result, mask overlay, and changed boundary at 22×, plus all four states at face scale. Current eye-mask pixel counts: 1,210 image-left and 1,255 image-right; protected hair pixels are unchanged in all four states.

@@ -1,0 +1,79 @@
+{
+  "schema_version": 1,
+  "provenance": "existing_snapshot",
+  "source": {
+    "path": "static/sprites/07_sad.png",
+    "sha256": "9a8d2944ad8b165957b0e3bfa3bc77803743117e62800c5c3b1c9763336b5e39"
+  },
+  "inputs": {
+    "static/sprites/07_sad.png": "9a8d2944ad8b165957b0e3bfa3bc77803743117e62800c5c3b1c9763336b5e39"
+  },
+  "scripts": {},
+  "runtime": {
+    "python": "3.12.14",
+    "pillow": "12.3.0",
+    "numpy": "2.5.4",
+    "opencv": "5.0.0"
+  },
+  "states": {
+    "idle": "idle.png",
+    "blink": "blink.png",
+    "talking": "talking.png",
+    "blink_talking": "blink_talking.png"
+  },
+  "regions": {},
+  "reviews": [],
+  "deliverables": [
+    "blink.gif",
+    "blink.png",
+    "blink_talking.png",
+    "combined.gif",
+    "idle.png",
+    "talk.gif",
+    "talking.png"
+  ],
+  "artifacts": {
+    "blink.gif": "0e2b4b412c5080715bd77f11be2b0c8bb2ff0b95900fa7270c3654c0f2d39c47",
+    "blink.png": "855a8e44fc52a9710f47965fc3da8339ba947ef43f6d732e2aab6a267f8cbea6",
+    "blink_talking.png": "fb40d6e29c64b21202629b5fd24fd69e08daf6030744905d1783b4771f568b77",
+    "combined.gif": "f6e252deca7b744ef8f5d15b2f318415631d5067435a186c0c1ee0497dce3136",
+    "idle.png": "f9175df0ede86011d4e2379a3dca5087aeef808154f4802cb23bfd53c7327d5c",
+    "talk.gif": "e2c3d2c172674ca921cc6faf8c7892bd6b047c25cab02fdca77bf23daa4e8464",
+    "talking.png": "a5447da8900fe0ee334d54864b018e6c58349a29ce8713c992dcfcae086686a6"
+  },
+  "artifact_set_sha256": "5921aac2fde050620df7c41f250f4d2d7ed98612ca86157a07c25563a20ba23b",
+  "artwork_sha256": "5921aac2fde050620df7c41f250f4d2d7ed98612ca86157a07c25563a20ba23b",
+  "notes": "Snapshot of existing files at 849737b. Historical build inputs and edit regions have not been reconstructed; runtime describes this inventory, not the original generation. No fresh visual approval inferred.",
+  "build_id": "05097fc0918bd7361b6f263a0caf893787eb8283cfb7950a9d1511a8acc8a675",
+  "visual_review": {
+    "status": "historical_report",
+    "note": "Earlier experiment notes report visual review; no new artwork assessment in this cleanup.",
+    "artifact_set_sha256": "5921aac2fde050620df7c41f250f4d2d7ed98612ca86157a07c25563a20ba23b"
+  },
+  "user_approval": {
+    "status": "not_recorded"
+  },
+  "integrity": {
+    "status": "pass",
+    "states": {
+      "idle": {
+        "alpha_matches_source": true,
+        "outside_declared_regions": null
+      },
+      "blink": {
+        "alpha_matches_source": true,
+        "outside_declared_regions": null
+      },
+      "talking": {
+        "alpha_matches_source": true,
+        "outside_declared_regions": null
+      },
+      "blink_talking": {
+        "alpha_matches_source": true,
+        "outside_declared_regions": null
+      }
+    },
+    "containment": "not_recorded",
+    "visual_quality_certified": false
+  }
+}

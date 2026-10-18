@@ -15,6 +15,7 @@ before_states = {
 
 build({
     "experiment": "14_angry_animation",
+    "defer_manifest": True,
     "slug": "angry",
     "source": "static/sprites/05_angry.png",
     "source_mouth_state": "open",

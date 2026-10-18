@@ -179,41 +179,41 @@
     "happy_eyes.png": [
       [
         0,
-        2
+        0
       ],
       [
-        -1,
+        0,
         0
       ]
     ],
     "happy_blink_eyes.png": [
       [
         0,
-        2
+        -1
       ],
       [
-        -1,
+        0,
         -1
       ]
     ],
     "shocked_eyes.png": [
       [
-        2,
-        1
+        0,
+        0
       ],
       [
-        -2,
-        1
+        0,
+        0
       ]
     ],
     "shocked_blink_eyes.png": [
       [
-        2,
-        0
+        0,
+        -1
       ],
       [
-        -2,
-        0
+        0,
+        -1
       ]
     ]
   },
@@ -221,5 +221,18 @@
     "method": "Integer translation sweeps reviewed at 20x against encoded GIF crops, per-eye hair strands, and lash corners.",
     "mask_rule": "Each expression retains independent left/right open and blink contours; local donor offsets are applied to those contours before narrow strand guards.",
     "correction": "The former right fringe rectangle at x608-611 overlapped the donor upper lash and missed the actual short strand at x605-606. The guard now follows the source strand."
+  },
+  "historical_registration_notice": "Original donor registration below predates the Happy/Shocked open-eye replacements in 849737b. Current selected crops and build-time shifts are recorded separately; do not apply the old full-body transforms again.",
+  "selected_open_eye_crops": {
+    "happy_eyes.png": {
+      "sha256": "439e782ddc7dc240f89861381b5712dc3898c56218142484221784d151b1ec2a",
+      "source": "static/poses/document_reading/neutral.png",
+      "note": "Selected replacement from 849737b; current build-time shifts are listed above. Original full-generation registration was not retained."
+    },
+    "shocked_eyes.png": {
+      "sha256": "bcbb621a1321b14cf2d8dd4b2621650c32377cee715106a4788b7c82bdb9cf7b",
+      "source": "static/poses/document_reading/neutral.png",
+      "note": "Selected replacement from 849737b; current build-time shifts are listed above. Original full-generation registration was not retained."
+    }
   }
 }

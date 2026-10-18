@@ -7,6 +7,8 @@ import io
 import json
 from pathlib import Path
 
+from artwork_tools import compose_feature, align_feature, record_build, save_stage_review
+
 import cv2
 import numpy as np
 from PIL import Image, ImageDraw, ImageFilter
@@ -302,8 +304,7 @@ def build(config: dict, print_report: bool = True) -> dict:
         raise AssertionError(f"Unexpected source dimensions: {base.shape}")
     h, w = base.shape[:2]
 
-    # Each remaining expression owns two independently traced eye masks. Keeping
-    # them separate makes the review overlay and QA expose accidental mask reuse.
+    # Selections describe actual source/donor geometry; uniqueness is not a gate.
     eye_components = {}
     protected_eye_components = {}
     global_eye_protect = config.get("eye_protect", [])
@@ -363,11 +364,47 @@ def build(config: dict, print_report: bool = True) -> dict:
         eye_preserved += int(preserve.sum())
     eye_preserved = int(eye_preserve_mask.sum())
     mouth_frame = apply_feature(base, mouth_donor, mouth)
+    eye_allowed, mouth_allowed = eye > 0, mouth > 0
+    for feature, default_donor in (
+        ('eye', corrected_eye_donor), ('mouth', mouth_donor)
+    ):
+        layers = config.get(f'{feature}_layers')
+        if layers is None:
+            continue  # Existing pipelines keep their exact historical arithmetic.
+        donor = layers.get('donor', default_donor)
+        insertion = layers['insertion']
+        if 'alignment' in layers:
+            donor, insertion = align_feature(donor, insertion, layers['alignment'], (w, h))
+        final, declared, stages = compose_feature(
+            base, donor, insertion, repair_image=layers.get('repair_image'),
+            removal=layers.get('removal'), foreground=layers.get('foreground'),
+            cleanup=layers.get('cleanup', ()),
+        )
+        save_stage_review(out/f'{feature}_stages.png', stages,
+                          tuple(config[f'{feature}_box']), scale=8)
+        if feature == 'eye':
+            eye_frame, eye_allowed = final, declared
+            corrected_eye_donor = donor
+            eye = declared.astype(np.float32)
+            split = (config['eye_box'][0] + config['eye_box'][2]) // 2
+            left, right = eye.copy(), eye.copy()
+            left[:, split:] = 0
+            right[:, :split] = 0
+            eye_components = {'viewer_left': left, 'viewer_right': right}
+            eye_preserve_mask = np.asarray(layers.get('foreground', np.zeros((h, w)))) > 0
+            eye_preserved = int(eye_preserve_mask.sum())
+        else:
+            mouth_frame, mouth_allowed = final, declared
+            mouth_donor = donor
+            mouth = declared.astype(np.float32)
+    if np.any(eye_allowed & mouth_allowed):
+        raise ValueError('Eye/mouth declared regions overlap; define their operation order in a custom builder')
     if not np.any(eye_frame[:, :, :3] != base[:, :, :3]):
         raise AssertionError("Eye mask makes no visible change: wrong donor, crop, or mask")
     if not np.any(mouth_frame[:, :, :3] != base[:, :, :3]):
         raise AssertionError("Mouth mask makes no visible change: wrong donor, crop, or mask")
-    both_frame = apply_feature(eye_frame, mouth_donor, mouth)
+    both_frame = eye_frame.copy()
+    both_frame[mouth_allowed] = mouth_frame[mouth_allowed]
     if config["source_mouth_state"] == "closed":
         frames = {"idle": base.copy(), "blink": eye_frame, "talking": mouth_frame, "blink_talking": both_frame}
     elif config["source_mouth_state"] == "open":
@@ -391,8 +428,9 @@ def build(config: dict, print_report: bool = True) -> dict:
             "changed_pixels_by_state": per_state,
         }
 
-    allowed_masks = {"eye": eye > 0, "mouth": mouth > 0, "both": (eye > 0) | (mouth > 0)}
+    allowed_masks = {"eye": eye_allowed, "mouth": mouth_allowed, "both": eye_allowed | mouth_allowed}
     reports = {}
+    state_regions = {}
     for name, frame in frames.items():
         changed = np.any(frame[:, :, :3] != base[:, :, :3], axis=2)
         if not np.array_equal(frame[:, :, 3], base[:, :, 3]):
@@ -408,9 +446,10 @@ def build(config: dict, print_report: bool = True) -> dict:
             allowed = allowed_masks["eye"] if config["source_mouth_state"] == "open" else allowed_masks["both"]
         outside = int(np.count_nonzero(changed & ~allowed))
         if outside:
-            raise AssertionError(f"{name}: {outside} changed pixels outside feature masks")
-        reports[name] = {"changed_rgb_pixels": int(changed.sum()), "outside_feature_mask_pixels": outside,
+            raise AssertionError(f"{name}: {outside} changed pixels outside declared edit regions")
+        reports[name] = {"changed_rgb_pixels": int(changed.sum()), "outside_declared_edit_regions": outside,
                          "alpha_identical": True}
+        state_regions[name] = allowed
         path = out / f"{name}.png"
         save_png_atomic(path, frame)
 
@@ -458,6 +497,14 @@ def build(config: dict, print_report: bool = True) -> dict:
         "notes": config.get("notes", "")
     }
     (out / "QA.json").write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
+    reviews = [name for name in (
+        'left_eye_20x_review.png', 'right_eye_20x_review.png', 'mouth_20x_review.png',
+        'eye_stages.png', 'mouth_stages.png',
+    ) if (out/name).exists() and (not name.endswith('_stages.png') or config.get(name.split('_')[0]+'_layers') is not None)]
+    if not config.get('defer_manifest', False):
+        record_build(out, src_path, inputs=sorted((here/'assets').glob('*.png')),
+                     scripts=[here/'build.py', Path(__file__), ROOT/'experiments/artwork_tools.py'],
+                     regions=state_regions, reviews=reviews, notes=config.get('notes', ''))
     if print_report:
         print(json.dumps(report, indent=2))
     return report

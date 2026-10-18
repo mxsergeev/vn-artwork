@@ -1,0 +1,81 @@
+{
+  "schema_version": 1,
+  "provenance": "existing_snapshot",
+  "source": {
+    "path": "static/poses/document_reading/neutral.png",
+    "sha256": "c381bd610b0753cf74631ac224bba573a0fbfdc240d4df04c9c2015072755a8f"
+  },
+  "inputs": {
+    "static/poses/document_reading/neutral.png": "c381bd610b0753cf74631ac224bba573a0fbfdc240d4df04c9c2015072755a8f"
+  },
+  "scripts": {},
+  "runtime": {
+    "python": "3.12.14",
+    "pillow": "12.3.0",
+    "numpy": "2.5.4",
+    "opencv": "5.0.0"
+  },
+  "states": {
+    "idle": "idle.png",
+    "blink": "blink.png",
+    "talking": "talking.png",
+    "blink_talking": "blink_talking.png"
+  },
+  "regions": {},
+  "reviews": [],
+  "deliverables": [
+    "blink.gif",
+    "blink.png",
+    "blink_talking.png",
+    "combined.gif",
+    "idle.png",
+    "talk.gif",
+    "talking.png"
+  ],
+  "artifacts": {
+    "blink.gif": "88094c2b7fc8dad1d421f5384f664e62fa08f35ea5348f69deb92e8879cba07a",
+    "blink.png": "e59b9b9881acfbed3b88646bd63f8f3c8701e7a6ee9a2411b1a33e3640f1b305",
+    "blink_talking.png": "2ae09086287a9444956805d1b0a3a4ac80567e6938fe6a993234b430c0e2c248",
+    "combined.gif": "0709b2ddd95de8113a530e6fb0fb9e18b2a71d489f62148e63d560db9293d8ab",
+    "idle.png": "22e96b252b36d889cc4a1d8bcea8a38adb426b018dd932cd1a0dda20b1dd875d",
+    "talk.gif": "199866cb0ef6c05b5ccef01d7d3fc93352c90bd71dc0448e0329d76c30d2d738",
+    "talking.png": "67ac4118683de617add62a73b053b1f979e2cde5e2303e2b6228ae1dfb0fb2ff"
+  },
+  "artifact_set_sha256": "41fbfa973271f8655690058c2f30b67cac9b7997daf99e835b40b802097a56ee",
+  "artwork_sha256": "41fbfa973271f8655690058c2f30b67cac9b7997daf99e835b40b802097a56ee",
+  "notes": "NOT APPROVED: snapshot of existing 849737b WIP files. Incomplete source removal, skin seams, and lash/hair artifacts remain. This is not an export of the final one-pixel code edit.",
+  "build_id": "635a67fe5aa8a958dcf241b59a2199953822eccbca48553e2152ee952acc5d4b",
+  "visual_review": {
+    "status": "rejected",
+    "note": "User rejected the visible repair results before the 849737b WIP checkpoint.",
+    "artifact_set_sha256": "41fbfa973271f8655690058c2f30b67cac9b7997daf99e835b40b802097a56ee"
+  },
+  "user_approval": {
+    "status": "not_approved",
+    "note": "Explicit NOT APPROVED checkpoint in 849737b.",
+    "artwork_sha256": "41fbfa973271f8655690058c2f30b67cac9b7997daf99e835b40b802097a56ee"
+  },
+  "integrity": {
+    "status": "pass",
+    "states": {
+      "idle": {
+        "alpha_matches_source": true,
+        "outside_declared_regions": null
+      },
+      "blink": {
+        "alpha_matches_source": true,
+        "outside_declared_regions": null
+      },
+      "talking": {
+        "alpha_matches_source": true,
+        "outside_declared_regions": null
+      },
+      "blink_talking": {
+        "alpha_matches_source": true,
+        "outside_declared_regions": null
+      }
+    },
+    "containment": "not_recorded",
+    "visual_quality_certified": false
+  }
+}

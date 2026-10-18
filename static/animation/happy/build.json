@@ -1,0 +1,79 @@
+{
+  "schema_version": 1,
+  "provenance": "existing_snapshot",
+  "source": {
+    "path": "static/sprites/02_happy.png",
+    "sha256": "948886102f4d44c27da120172ce8187309aba25af27e458d7b5ff318968c8ad3"
+  },
+  "inputs": {
+    "static/sprites/02_happy.png": "948886102f4d44c27da120172ce8187309aba25af27e458d7b5ff318968c8ad3"
+  },
+  "scripts": {},
+  "runtime": {
+    "python": "3.12.14",
+    "pillow": "12.3.0",
+    "numpy": "2.5.4",
+    "opencv": "5.0.0"
+  },
+  "states": {
+    "idle": "idle.png",
+    "blink": "blink.png",
+    "talking": "talking.png",
+    "blink_talking": "blink_talking.png"
+  },
+  "regions": {},
+  "reviews": [],
+  "deliverables": [
+    "blink.gif",
+    "blink.png",
+    "blink_talking.png",
+    "combined.gif",
+    "idle.png",
+    "talk.gif",
+    "talking.png"
+  ],
+  "artifacts": {
+    "blink.gif": "f3afb1ca4e87c22c0013f766fa9f058951bfc8dcb988fb97b78aa375cf3bd619",
+    "blink.png": "a47b091fd2d60d09d193fcf55a64056ba006ea47437bb7915d54b320b180f271",
+    "blink_talking.png": "948886102f4d44c27da120172ce8187309aba25af27e458d7b5ff318968c8ad3",
+    "combined.gif": "e467100f5d5ff7446f24c5593b2739c92c7dd7093e10d54f4411a156d84c08a7",
+    "idle.png": "14280fab31af6d5f11fcf42f78cce1ebdaaaadd9ca4bf4d9ef9a9b725eebf5c8",
+    "talk.gif": "806e9468dd86795114e527705fc7a80c1ab893986b003b1f6996a214380c5152",
+    "talking.png": "79bed5d4b9f0e7d1c41ad7bb805f1b810851764e5e0c52fd9304f6cb455cedd8"
+  },
+  "artifact_set_sha256": "eaa3cb0a7ecad5f7c79bc1545007fe8ee9991a4396fc3f7813731b2aac795edf",
+  "artwork_sha256": "eaa3cb0a7ecad5f7c79bc1545007fe8ee9991a4396fc3f7813731b2aac795edf",
+  "notes": "Snapshot of existing files at 849737b. Historical build inputs and edit regions have not been reconstructed; runtime describes this inventory, not the original generation. No fresh visual approval inferred.",
+  "build_id": "4210582f5955f253c5951fe049428eb9c62bbdb9d9f88df3d8f19e4b1adebb26",
+  "visual_review": {
+    "status": "historical_report",
+    "note": "Earlier experiment notes report visual review; no new artwork assessment in this cleanup.",
+    "artifact_set_sha256": "eaa3cb0a7ecad5f7c79bc1545007fe8ee9991a4396fc3f7813731b2aac795edf"
+  },
+  "user_approval": {
+    "status": "not_recorded"
+  },
+  "integrity": {
+    "status": "pass",
+    "states": {
+      "idle": {
+        "alpha_matches_source": true,
+        "outside_declared_regions": null
+      },
+      "blink": {
+        "alpha_matches_source": true,
+        "outside_declared_regions": null
+      },
+      "talking": {
+        "alpha_matches_source": true,
+        "outside_declared_regions": null
+      },
+      "blink_talking": {
+        "alpha_matches_source": true,
+        "outside_declared_regions": null
+      }
+    },
+    "containment": "not_recorded",
+    "visual_quality_certified": false
+  }
+}

@@ -1,23 +1,24 @@
-# Published animation assets
+# Animation assets and status
 
-Each expression folder contains four 1086×1448 RGBA states: `idle.png`, `blink.png`, `talking.png`, and `blink_talking.png`. The PNGs preserve the source sprite's alpha channel. `preview.jpg` is a compact index of all eight idle expressions.
+The default pose has eight existing expression sets. Each contains four 1086×1448 RGBA states and native-size blink, talk, and combined GIFs. PNGs preserve source transparency; GIFs use an opaque pale-gray matte.
 
-| Folder | State reused from the original sprite | GIF previews |
+| Set | Original state reused | Implementation / status |
 |---|---|---|
-| `neutral/` | `idle.png` | `blink.gif`, `talk.gif`, `combined.gif` |
-| `happy/` | `blink_talking.png` | `blink.gif`, `talk.gif`, `combined.gif` |
-| `shocked/` | `idle.png` | `blink.gif`, `talk.gif`, `combined.gif` |
-| `pouty/` | `idle.png` | `blink.gif`, `talk.gif`, `combined.gif` |
-| `angry/` | `talking.png` | `blink.gif`, `talk.gif`, `combined.gif` |
-| `embarrassed/` | `talking.png` | `blink.gif`, `talk.gif`, `combined.gif` |
-| `sad/` | `idle.png` | `blink.gif`, `talk.gif`, `combined.gif` |
-| `strained_smile/` | `talking.png` | `blink.gif`, `talk.gif`, `combined.gif` |
+| neutral | idle | [10](../../experiments/10_neutral_blink_refined/README.md), established reference |
+| happy | blink_talking | [11](../../experiments/11_happy_eye_refined/README.md), established reference; mouth donor from 09 |
+| shocked | idle | [12](../../experiments/12_shocked_animation/README.md), established reference |
+| pouty | idle | [13](../../experiments/13_pouty_animation/README.md), existing set |
+| angry | talking | [14](../../experiments/14_angry_animation/README.md), user accepted corrected result on 2026-10-18 |
+| embarrassed | talking | [15](../../experiments/15_embarrassed_animation/README.md), existing set |
+| sad | idle | [16](../../experiments/16_sad_animation/README.md), existing set |
+| strained_smile | talking | [17](../../experiments/17_strained_smile_animation/README.md), existing set |
+| document_reading/{neutral,happy,shocked} | pose-specific | **NOT APPROVED**: unresolved eye seams, lash remnants, and hair joins; see [status](../../experiments/13_document_reading_pose/README.md) |
 
-Each expression folder contains three full-resolution GIF previews (`blink.gif`, `talk.gif`, and `combined.gif`) at 1086×1448. `all_expressions.gif` shows all eight face animations together in a labeled 3×3 grid. GIFs are flattened onto an opaque pale-gray background because GIF transparency cannot represent the sprites' antialiased alpha without edge artifacts; use the PNG states when transparency is needed.
+`preview.jpg` and `all_expressions.gif` index the default sets. Document-reading has its own `all_three_native.gif` and preview; its presence here does not establish approval.
 
-`python experiments/build_animation_previews.py` regenerates every published GIF from the four PNG states in these folders. Experiment scripts write temporary frames, masks, review GIFs, and QA files under the ignored experiment `output/` folders.
+Each set's `build.json` identifies its current files, source, and recorded status. Initial records of existing assets are labeled `existing_snapshot`: they do not claim a newly reproduced build, fresh visual review, or historically unrecorded approval. Missing historical edit-region coverage is reported as unmeasured.
 
-The separate `document_reading/` set is a pose-specific variant. Its source pose is `static/poses/document_reading/neutral.png`; each expression folder contains the same four PNG states plus native-size `blink.gif`, `talk.gif`, and `combined.gif` (1086×1448). `document_reading/all_three_native.gif` places neutral, happy, and shocked side by side at 3306×1448 with combined blink-and-talk timing. These files do not replace the default pose assets above.
+Builders and preview commands produce candidates under ignored experiment output folders. Publication is explicit through `experiments/publish_artwork.py`; inspect the exact build before recording review. See the shared [workflow](../../README.md) and [editing techniques](../../EDITING_TECHNIQUES.md).
 
-Build scripts write temporary frames, masks, GIFs, and QA files under the ignored experiment `output/` folders. These directories contain reproducible work products; this folder contains the reviewed, published copies.
+Duplicate versioned repair GIFs and editor backups belong to local experiment output, not this asset collection. Essential sources, selected states, supported previews, and build records are tracked.
 

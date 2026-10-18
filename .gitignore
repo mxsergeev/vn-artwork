@@ -34,8 +34,14 @@ Thumbs.db
 /experiments/17_strained_smile_animation/output/
 /experiments/13_document_reading_pose/output/
 /.codex-python/
+/experiments/preview_output/
+/experiments/.workflow_checks/
 
 # Reviewed final animation assets and index preview are intentionally tracked.
 !/static/animation/
 !/static/animation/**
+
+# Discarded repair variants belong under the ignored experiment output/ folder.
+/static/animation/document_reading/all_three_expressions_repaired*.gif
+*~
 

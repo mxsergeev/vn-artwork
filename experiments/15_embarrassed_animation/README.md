@@ -1,8 +1,26 @@
-# Experiment 15 — Embarrassed blink and speech
+# Embarrassed animation
 
-Adds four source-anchored animation states to `static/sprites/06_embarrassed.png`. The original small open mouth is reused for talking; an image-edited closed-mouth donor supplies idle. The mask keeps the visible blush, raised brows, hair, cheek shading, and source alpha intact.
+| Status record | Current information |
+|---|---|
+| Master | `static/sprites/06_embarrassed.png` |
+| Usable donors | `assets/eyes_closed_patch.png` and `assets/mouth_variant_patch.png`; geometry in build.py. |
+| Status | Existing default-pose set. |
+| Current build | Ignored `output/build.json` after the command below; published identity is recorded alongside the static assets. |
+| Defects | No new defect assessment in this cleanup; read existing artwork before changing it. |
+| Visual review | Prior README reports source/donor/result review at 22×; retained as historical evidence. |
+| User approval | Not recorded for a new candidate. |
+| Next action | Inspect the existing set before deciding whether any edit is necessary. |
 
-Run `python experiments/15_embarrassed_animation/build.py` from the repository root. Frames, GIFs, mask overlays, changed-boundary reviews, and QA are written to ignored `output/`.
+## Local method
 
+Original open mouth supplies talking. Preserve blush and brows while creating the closed-mouth idle state.
 
-Mask iteration: an earlier left-eye keep-out crossed the source upper lashes. It was removed, then Embarrassed's raised-eye upper-lash arcs and lifted outer tips were traced separately per eye. The raised brows, hair, blush, and cheek shading remain outside the masks. Reviewed source, donor, result, mask overlay, and changed boundary at 22×, plus all four states at face scale. Current eye-mask pixel counts: 1,212 image-left and 1,179 image-right; protected hair pixels are unchanged in all four states.
+## Command
+
+```sh
+python experiments/15_embarrassed_animation/build.py
+```
+
+Writes the four standard PNG states, native GIFs, review images, declared regions, and a manifest to ignored `output/`. Historical output names remain available. Building does not publish.
+
+Follow the shared [workflow](../../README.md) and [techniques](../../EDITING_TECHNIQUES.md). Previous iteration measurements belong to [history](../../HISTORY.md), not acceptance criteria.
