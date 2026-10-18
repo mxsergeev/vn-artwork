@@ -3,6 +3,7 @@
 Candidate-only tooling: do not publish, do not modify the neutral master.
 """
 from pathlib import Path
+import shutil
 import cv2
 import numpy as np
 from PIL import Image, ImageDraw
@@ -71,6 +72,14 @@ LEFT_EYE=[(536,151),(542,148),(554,149),(568,150),(579,148),(588,148),
           (537,175),(536,162)]
 RIGHT_EYE=[(592,153),(600,148),(612,148),(625,145),(632,148),(635,155),
            (634,169),(631,177),(626,184),(605,185),(596,179),(591,168)]
+# Target-space contour following the source cheek where the bangs/hair overlap.
+# Right of this line is foreground from the master, not material to transplant.
+# It is SHOCKED-specific: happy stays byte-identical to its previous build.
+SHOCKED_SOURCE_HAIR = [
+    (638,145),(637,155),(635,166),(632,176),(626,185),
+    (617,195),(607,206),(599,216),(590,226),
+    (590,239),(700,239),(700,140),(638,140),
+]
 # All mouth selection vertices are inside the master jawline. Never copy donor hair.
 MOUTH=[(553,202),(558,199),(572,198),(589,198),(596,201),(596,207),
        (592,214),(586,219),(572,222),(559,218),(553,211)]
@@ -84,6 +93,11 @@ def transplant(source, aligned, name):
     result=source.copy()
     regions = [("left_eye",LEFT_EYE),("right_eye",RIGHT_EYE),("mouth",MOUTH)]
     complete=np.zeros(source.shape[:2],np.uint8)
+    old_candidate = OUT/(name+".png")
+    if name == "shocked" and old_candidate.exists():
+        previous = OUT/"shocked_before_cheek_repair.png"
+        if not previous.exists():
+            shutil.copyfile(old_candidate,previous)
     stage_names=[]
     for region_name, points in regions:
         mask=polygon_mask(points)
@@ -105,6 +119,28 @@ def transplant(source, aligned, name):
         a=np.clip(distance/3.0,0,1)[:,:,None]
         result[:,:,:3]=np.rint(result[:,:,:3].astype(float)*(1-a)+corrected*a).astype(np.uint8)
         stage_names.append((region_name,result.copy()))
+    if name == "shocked":
+        # Last stage: retain the master's foreground cheek/hair boundary.
+        # Restrict restoration to pixels that could have been transplanted.
+        restore = (polygon_mask(SHOCKED_SOURCE_HAIR)>0) & (complete>0)
+        result[restore] = source[restore]
+        # Preserve the literal mask for diagnosis, independent of any skin threshold.
+        Image.fromarray(np.uint8(restore)*255).save(OUT/"shocked_source_hair_restore_mask.png")
+        previous=OUT/"shocked_before_cheek_repair.png"
+        if previous.exists():
+            before=load(previous)
+            crop=(576,147,654,242)
+            samples=[("master",source),("old shocked",before),("fixed shocked",result)]
+            zoom=8
+            tile_w=(crop[2]-crop[0])*zoom
+            tile_h=(crop[3]-crop[1])*zoom
+            comparison=Image.new("RGB",(tile_w*len(samples),tile_h+22),"#eeeeee")
+            d=ImageDraw.Draw(comparison)
+            for i,(title,im) in enumerate(samples):
+                comparison.paste(shown(im,crop,magnification=zoom),(i*tile_w,22))
+                d.text((i*tile_w+5,5),title,fill="black")
+            comparison.save(OUT/"shocked_cheek_before_after.png")
+        print("shocked source foreground pixels restored",int(restore.sum()))
     assert np.array_equal(result[:,:,3],source[:,:,3])
     changed=np.any(result[:,:,:3]!=source[:,:,:3],axis=2)
     assert not (changed & (complete==0)).any()
