@@ -33,6 +33,7 @@ Thumbs.db
 /experiments/16_sad_animation/output/
 /experiments/17_strained_smile_animation/output/
 /experiments/13_document_reading_pose/output/
+/.codex-python/
 
 # Reviewed final animation assets and index preview are intentionally tracked.
 !/static/animation/
