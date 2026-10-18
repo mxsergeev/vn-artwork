@@ -5,4 +5,4 @@ Adds four source-anchored animation states to `static/sprites/08_strained_smile.
 Run `python experiments/17_strained_smile_animation/build.py` from the repository root. Frames, GIFs, mask overlays, changed-boundary reviews, and QA are written to ignored `output/`.
 
 
-Mask iteration: tightened the left lid contour to preserve the fringe and under-eye skin, with a separate small outer-lash polygon. A tiny outer-corner patch removes the last source sclera pixel without reaching the brow. The eye mask fell from 1,428 to 1,306 pixels; inspect the generated 8x crop and changed-boundary overlay after rebuilding.
+Mask iteration: an earlier left-eye keep-out crossed the source upper lashes. It was removed, then Strained Smile's compressed upper-lash arcs and outer tips were traced separately per eye. The lower edge preserves under-eye skin, and the right outer hair strand stays source-identical. Reviewed source, donor, result, mask overlay, and changed boundary at 22×, plus all four states at face scale. Current eye-mask pixel counts: 1,210 image-left and 1,255 image-right; protected hair pixels are unchanged in all four states.

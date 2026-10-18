@@ -5,4 +5,4 @@ Adds four source-anchored animation states to `static/sprites/06_embarrassed.png
 Run `python experiments/15_embarrassed_animation/build.py` from the repository root. Frames, GIFs, mask overlays, changed-boundary reviews, and QA are written to ignored `output/`.
 
 
-Mask iteration: tightened the left lid contour to retain the fringe and under-eye skin, with a separate small outer-lash polygon. A tiny outer-corner patch removes the last source sclera pixel without reaching the brow. The eye mask fell from 1,433 to 1,304 pixels; inspect the generated 8x crop and changed-boundary overlay after rebuilding.
+Mask iteration: an earlier left-eye keep-out crossed the source upper lashes. It was removed, then Embarrassed's raised-eye upper-lash arcs and lifted outer tips were traced separately per eye. The raised brows, hair, blush, and cheek shading remain outside the masks. Reviewed source, donor, result, mask overlay, and changed boundary at 22×, plus all four states at face scale. Current eye-mask pixel counts: 1,212 image-left and 1,179 image-right; protected hair pixels are unchanged in all four states.

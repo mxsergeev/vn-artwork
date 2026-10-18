@@ -35,12 +35,21 @@ for slug in ALL_EXPRESSIONS:
                 assert np.array_equal(alpha, reference_alpha), f"{slug}/{state}: alpha differs from idle"
 print("INTEGRITY PASS all eight expressions: four full-size RGBA states with identical per-expression alpha")
 
+mask_reports = {}
 for slug, (experiment, source_name) in EXPRESSIONS.items():
     source = np.asarray(Image.open(ROOT / "static/sprites" / f"{source_name}.png").convert("RGBA"))
     published = ROOT / "static/animation" / slug
     out = ROOT / "experiments" / experiment / "output"
     report = json.loads((out / "QA.json").read_text(encoding="utf-8"))
+    mask_reports[slug] = report
     assert report["source_alpha_preserved_for_all_states"] is True
+    protected_checks = report["protected_eye_regions_unchanged"]
+    assert {"viewer_left", "viewer_right"}.issubset(protected_checks), \
+        f"{slug}: missing individually protected hair/strand regions"
+    for region_name, checks in protected_checks.items():
+        assert checks["protected_source_pixels"] > 0, f"{slug}/{region_name}: no protected source area"
+        assert all(count == 0 for count in checks["changed_pixels_by_state"].values()), \
+            f"{slug}/{region_name}: protected hair/strand pixels changed"
     assert all(v["outside_feature_mask_pixels"] == 0 for v in report["states"].values())
     # The outside-mask assertion only verifies compositing integrity. It cannot
     # prove that all eyelashes/eyelids/mouth pixels were included in the masks.
@@ -70,6 +79,15 @@ for slug, (experiment, source_name) in EXPRESSIONS.items():
                 gif.seek(frame_no)
                 gif.convert("RGB")
     print(f"INTEGRITY PASS {slug}: 4 exact PNG copies, source alpha, 3 readable GIFs and 20x review images")
+
+assert len({report["eye_mask_sha256"] for report in mask_reports.values()}) == len(EXPRESSIONS), \
+    "The five expressions must have five distinct combined eye masks"
+for region in ("viewer_left", "viewer_right"):
+    assert all(region in report["eye_mask_region_sha256"] for report in mask_reports.values()), \
+        f"Missing {region} mask hash"
+    assert len({report["eye_mask_region_sha256"][region] for report in mask_reports.values()}) == len(EXPRESSIONS), \
+        f"The five expressions must have five distinct {region} eye masks"
+print("PASS all five expressions have distinct combined, image-left, and image-right eye masks")
 
 preview = ROOT / "static/animation/preview.jpg"
 with Image.open(preview) as image:

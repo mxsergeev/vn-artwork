@@ -28,11 +28,11 @@ def polygon(points, feather):
     return np.clip(cv2.distanceTransform(raw, cv2.DIST_L2, 5) / feather, 0, 1).astype('float32')
 
 # Image-specific contours chosen after comparing source/donor/blink overlays.
-# Left eye: include a tiny dedicated lash-tip polygon so the outer lower lash is not cut off.
+# Left eye: keep a tiny dedicated tip patch, constrained to the actual lash/skin edge.
 LEFT_MAIN = [(482,139),(489,136),(498,136),(508,139),(512,144),
              (511,149),(505,153),(496,154),(488,154),(482,150)]
 # The previous blink clipped the outermost 2 px of this lash. Extend only that tip.
-LEFT_LASH_TIP = [(477,148),(482,145),(486,148),(485,153),(478,154)]
+LEFT_LASH_TIP = [(479,148),(481,147),(484,148),(483,151),(480,152)]
 # Right eye: thinner lower boundary to preserve original under-eye shading.
 RIGHT_MAIN = [(534,133),(540,128),(551,126),(563,126),(575,127),
               (582,131),(583,137),(579,142),(568,145),(553,145),
