@@ -37,6 +37,14 @@ def polygon(points):
     return raw
 
 
+def exact_pixels(points):
+    """Create a raw mask containing only the listed source-image pixels."""
+    raw = np.zeros((H, W), np.uint8)
+    for x, y in points:
+        raw[y, x] = 255
+    return raw
+
+
 def feather(raw, width=1.2):
     """Feather only inward, keeping every changed pixel inside its contour."""
     distance = cv2.distanceTransform(raw, cv2.DIST_L2, 5)
@@ -197,13 +205,26 @@ SHOCKED_RIGHT_UPPER_LASH_TIP_RAW = polygon([
     # The outer upper lash tip stays separate from the central fringe strand.
     (623, 157), (625, 157), (626, 159), (625, 162), (622, 163), (620, 161),
 ])
+# The 20x donor/result review found a few genuine upper-lash pixels outside the
+# two traced shocked contours. Record these as separate, per-eye pixel patches
+# in the donor's unshifted coordinates so they move with the local registration.
+# Left: retain the antialiased lid connection, but omit the single donor pixel
+# that sticks upward as a square and reads as a stray mark in the decoded pose.
+# Right: a 3px lid bridge plus two upper tips.
+SHOCKED_LEFT_OPEN_LASH_DETAIL_RAW = exact_pixels([
+    (540, 149),
+])
+SHOCKED_RIGHT_OPEN_LASH_DETAIL_RAW = exact_pixels([
+    (617, 155), (617, 156), (618, 156), (619, 156), (623, 154),
+])
 LEFT_SHOCK_EYE = np.maximum.reduce((
     LEFT_SHOCK_EYE_CORE, SHOCKED_LEFT_LASH_TIP_RAW,
     SHOCKED_LEFT_OUTER_LASH_RAW, SHOCKED_LEFT_OUTER_LASH_TIP_RAW,
+    SHOCKED_LEFT_OPEN_LASH_DETAIL_RAW,
 ))
 RIGHT_SHOCK_EYE = np.maximum.reduce((
     RIGHT_SHOCK_EYE_CORE, SHOCKED_RIGHT_LASH_TIP_RAW,
-    SHOCKED_RIGHT_UPPER_LASH_TIP_RAW,
+    SHOCKED_RIGHT_UPPER_LASH_TIP_RAW, SHOCKED_RIGHT_OPEN_LASH_DETAIL_RAW,
 ))
 SHOCK_EYE_RAW = np.maximum(LEFT_SHOCK_EYE, RIGHT_SHOCK_EYE)
 SHOCK_EYE_WEIGHT = np.maximum(feather(LEFT_SHOCK_EYE, 1.25), feather(RIGHT_SHOCK_EYE, 1.25))
@@ -397,6 +418,13 @@ RIGHT_SHOCK_EYE = protect_fringe(np.maximum(
     translate_mask(_shocked_open_seed[1], LOCAL_EYE_ALIGN['shocked_eyes.png'][1]),
     np.zeros((H, W), np.uint8),
 ), SHOCKED_RIGHT_FRINGE_GUARD)
+# Regression checks for the donor-only upper-lash pixels added after the 20x
+# and 40x source/donor/result review. These stay expression- and eye-specific.
+assert LEFT_SHOCK_EYE[150, 542] > 0
+assert LEFT_SHOCK_EYE[150, 549] == 0, 'Keep the square donor pixel out of the shocked left mask.'
+assert all(RIGHT_SHOCK_EYE[y, x] > 0 for x, y in (
+    (615, 156), (615, 157), (616, 157), (617, 157), (621, 155),
+))
 SHOCKED_BLINK_LEFT_RAW = protect_fringe(np.maximum(
     translate_mask(_shocked_blink_seed[0], LOCAL_EYE_ALIGN['shocked_blink_eyes.png'][0]), LEFT_SHOCK_EYE,
 ), SHOCKED_LEFT_FRINGE_GUARD)
@@ -431,6 +459,81 @@ SHOCKED_BLINK_WEIGHT = np.maximum(
 )
 SHOCKED_BLINK_WEIGHT[LEFT_SHOCK_EYE > 0] = 1.0
 SHOCKED_BLINK_WEIGHT[RIGHT_SHOCK_EYE > 0] = 1.0
+# The closed-lid donor leaves a narrow crease transition just beyond the eye
+# replacement contours. These are separate, hand-traced cleanup patches for
+# each shocked eye. They are deliberately outside the feature masks so the
+# donor can carry that short crease into the surrounding skin without widening
+# the eye transplant or touching the adjacent fringe.
+SHOCKED_BLINK_LEFT_SEAM_REGION = polygon([
+    (559, 154), (576, 155), (578, 158), (576, 162),
+    (571, 163), (562, 161), (558, 159),
+])
+SHOCKED_BLINK_RIGHT_SEAM_REGION = polygon([
+    (594, 155), (622, 155), (627, 158), (626, 163),
+    (620, 164), (599, 162), (593, 160),
+])
+SHOCKED_BLINK_LEFT_SEAM_RAW = np.where(
+    (SHOCKED_BLINK_LEFT_SEAM_REGION > 0) & (SHOCKED_BLINK_LEFT_RAW == 0), 255, 0
+).astype(np.uint8)
+SHOCKED_BLINK_RIGHT_SEAM_RAW = np.where(
+    (SHOCKED_BLINK_RIGHT_SEAM_REGION > 0) & (SHOCKED_BLINK_RIGHT_RAW == 0), 255, 0
+).astype(np.uint8)
+assert not np.any((SHOCKED_BLINK_LEFT_SEAM_RAW > 0) & (SHOCKED_BLINK_LEFT_RAW > 0))
+assert not np.any((SHOCKED_BLINK_RIGHT_SEAM_RAW > 0) & (SHOCKED_BLINK_RIGHT_RAW > 0))
+# Neutral and Happy have their own outside-mask cleanup where their closed-lid
+# donors meet the source upper-lash line. These narrow regions clear only the
+# residual lash crescents; each is clipped against its own blink feature mask.
+NEUTRAL_BLINK_LEFT_SEAM_REGION = polygon([
+    (536, 151), (546, 150), (553, 152), (556, 155),
+    (553, 158), (544, 159), (537, 157),
+])
+NEUTRAL_BLINK_RIGHT_SEAM_REGION = polygon([
+    (603, 156), (612, 155), (621, 157), (625, 160),
+    (623, 163), (615, 164), (607, 162),
+])
+HAPPY_BLINK_LEFT_SEAM_REGION = polygon([
+    (535, 151), (545, 150), (553, 152), (556, 155),
+    (554, 159), (545, 160), (537, 158),
+])
+HAPPY_BLINK_RIGHT_SEAM_REGION = polygon([
+    (604, 157), (613, 156), (622, 158), (626, 161),
+    (623, 164), (615, 165), (607, 163),
+])
+HAPPY_OPEN_LEFT_SEAM_REGION = polygon([
+    (529, 150), (534, 150), (537, 152), (537, 155),
+    (534, 156), (530, 154),
+])
+HAPPY_OPEN_RIGHT_SEAM_REGION = polygon([
+    (617, 156), (621, 156), (624, 158), (623, 160),
+    (619, 160), (616, 158),
+])
+NEUTRAL_BLINK_LEFT_SEAM_RAW = np.where(
+    (NEUTRAL_BLINK_LEFT_SEAM_REGION > 0) & (NEUTRAL_BLINK_LEFT_RAW == 0), 255, 0
+).astype(np.uint8)
+NEUTRAL_BLINK_RIGHT_SEAM_RAW = np.where(
+    (NEUTRAL_BLINK_RIGHT_SEAM_REGION > 0) & (NEUTRAL_BLINK_RIGHT_RAW == 0), 255, 0
+).astype(np.uint8)
+HAPPY_BLINK_LEFT_SEAM_RAW = np.where(
+    (HAPPY_BLINK_LEFT_SEAM_REGION > 0) & (HAPPY_BLINK_LEFT_RAW == 0), 255, 0
+).astype(np.uint8)
+HAPPY_BLINK_RIGHT_SEAM_RAW = np.where(
+    (HAPPY_BLINK_RIGHT_SEAM_REGION > 0) & (HAPPY_BLINK_RIGHT_RAW == 0), 255, 0
+).astype(np.uint8)
+HAPPY_OPEN_LEFT_SEAM_RAW = np.where(
+    (HAPPY_OPEN_LEFT_SEAM_REGION > 0) & (HAPPY_OPEN_LEFT_RAW == 0), 255, 0
+).astype(np.uint8)
+HAPPY_OPEN_RIGHT_SEAM_RAW = np.where(
+    (HAPPY_OPEN_RIGHT_SEAM_REGION > 0) & (HAPPY_OPEN_RIGHT_RAW == 0), 255, 0
+).astype(np.uint8)
+for seam_mask, feature_mask in (
+    (NEUTRAL_BLINK_LEFT_SEAM_RAW, NEUTRAL_BLINK_LEFT_RAW),
+    (NEUTRAL_BLINK_RIGHT_SEAM_RAW, NEUTRAL_BLINK_RIGHT_RAW),
+    (HAPPY_BLINK_LEFT_SEAM_RAW, HAPPY_BLINK_LEFT_RAW),
+    (HAPPY_BLINK_RIGHT_SEAM_RAW, HAPPY_BLINK_RIGHT_RAW),
+    (HAPPY_OPEN_LEFT_SEAM_RAW, HAPPY_OPEN_LEFT_RAW),
+    (HAPPY_OPEN_RIGHT_SEAM_RAW, HAPPY_OPEN_RIGHT_RAW),
+):
+    assert not np.any((seam_mask > 0) & (feature_mask > 0))
 EYE_ANY_RAW = np.maximum.reduce((
     EYE_OPEN_RAW, NEUTRAL_BLINK_RAW, HAPPY_BLINK_RAW, SHOCK_EYE_RAW, SHOCKED_BLINK_RAW,
 ))
@@ -547,10 +650,54 @@ def apply_eyes(canvas, filename, left_mask, right_mask, label):
     return out
 
 
+def apply_shocked_blink_seam_cleanup(canvas, label):
+    """Carry the closed-lid donor into two explicit outside-mask seam patches."""
+    out = canvas
+    specs = (
+        (0, SHOCKED_BLINK_LEFT_RAW, SHOCKED_BLINK_LEFT_SEAM_RAW,
+         (520, 147, 580, 178), 'left'),
+        (1, SHOCKED_BLINK_RIGHT_RAW, SHOCKED_BLINK_RIGHT_SEAM_RAW,
+         (580, 147, 635, 178), 'right'),
+    )
+    for side, feature_mask, seam_mask, sample_box, side_name in specs:
+        donor = load_eye_donor('shocked_blink_eyes.png', side)
+        donor_rgb, info = color_correct(
+            donor, feature_mask, EYES_BOX,
+            f'{label}_{side_name}_outside_mask_seam', sample_box=sample_box,
+        )
+        COLOR_QA[f'{label}_{side_name}_outside_mask_seam'] = info
+        # A short inward feather keeps the hand-traced patch edge soft. The
+        # patch itself remains disjoint from the feature mask by construction.
+        out = composite(out, donor_rgb, feather(seam_mask, 1.5))
+    return out
+
+
+def apply_eye_seam_cleanup(canvas, filename, specs, label):
+    """Carry one registered eye donor through its hand-traced edge seams."""
+    out = canvas
+    for side, feature_mask, seam_mask, sample_box, side_name in specs:
+        donor = load_eye_donor(filename, side)
+        donor_rgb, info = color_correct(
+            donor, feature_mask, EYES_BOX,
+            f'{label}_{side_name}_outside_mask_seam', sample_box=sample_box,
+        )
+        COLOR_QA[f'{label}_{side_name}_outside_mask_seam'] = info
+        out = composite(out, donor_rgb, feather(seam_mask, 1.5))
+    return out
+
+
 def make_states():
     neutral_blink = apply_eyes(
         BASE, 'neutral_blink_eyes.png', NEUTRAL_BLINK_LEFT_RAW,
         NEUTRAL_BLINK_RIGHT_RAW, 'neutral_blink_eyes',
+    )
+    neutral_blink = apply_eye_seam_cleanup(
+        neutral_blink, 'neutral_blink_eyes.png', (
+            (0, NEUTRAL_BLINK_LEFT_RAW, NEUTRAL_BLINK_LEFT_SEAM_RAW,
+             (520, 147, 580, 178), 'left'),
+            (1, NEUTRAL_BLINK_RIGHT_RAW, NEUTRAL_BLINK_RIGHT_SEAM_RAW,
+             (580, 147, 635, 178), 'right'),
+        ), 'neutral_blink_eyes',
     )
     neutral_talk = apply(BASE, 'neutral_talk_mouth.png', MOUTH_BOX, NEUTRAL_TALK_RAW, NEUTRAL_TALK_WEIGHT, 'neutral_talk_mouth')
     neutral_blink_talk = apply(neutral_blink, 'neutral_talk_mouth.png', MOUTH_BOX, NEUTRAL_TALK_RAW, NEUTRAL_TALK_WEIGHT, 'neutral_blink_talk_mouth')
@@ -565,10 +712,26 @@ def make_states():
         BASE, 'happy_eyes.png', HAPPY_OPEN_LEFT_RAW, HAPPY_OPEN_RIGHT_RAW,
         'happy_open_eyes',
     )
+    happy = apply_eye_seam_cleanup(
+        happy, 'happy_eyes.png', (
+            (0, HAPPY_OPEN_LEFT_RAW, HAPPY_OPEN_LEFT_SEAM_RAW,
+             (520, 147, 580, 178), 'left'),
+            (1, HAPPY_OPEN_RIGHT_RAW, HAPPY_OPEN_RIGHT_SEAM_RAW,
+             (580, 147, 635, 178), 'right'),
+        ), 'happy_open_eyes',
+    )
     happy = apply(happy, 'happy_mouth.png', MOUTH_BOX, HAPPY_CLOSED_RAW, HAPPY_CLOSED_WEIGHT, 'happy_closed_mouth')
     happy_blink = apply_eyes(
         happy, 'happy_blink_eyes.png', HAPPY_BLINK_LEFT_RAW,
         HAPPY_BLINK_RIGHT_RAW, 'happy_blink_eyes',
+    )
+    happy_blink = apply_eye_seam_cleanup(
+        happy_blink, 'happy_blink_eyes.png', (
+            (0, HAPPY_BLINK_LEFT_RAW, HAPPY_BLINK_LEFT_SEAM_RAW,
+             (520, 147, 580, 178), 'left'),
+            (1, HAPPY_BLINK_RIGHT_RAW, HAPPY_BLINK_RIGHT_SEAM_RAW,
+             (580, 147, 635, 178), 'right'),
+        ), 'happy_blink_eyes',
     )
     happy_talk = apply(happy, 'happy_talk_mouth.png', MOUTH_BOX, HAPPY_TALK_RAW, HAPPY_TALK_WEIGHT, 'happy_talk_mouth')
     happy_blink_talk = apply(happy_blink, 'happy_talk_mouth.png', MOUTH_BOX, HAPPY_TALK_RAW, HAPPY_TALK_WEIGHT, 'happy_blink_talk_mouth')
@@ -588,9 +751,15 @@ def make_states():
         shocked_face, 'shocked_blink_eyes.png', SHOCKED_BLINK_LEFT_RAW,
         SHOCKED_BLINK_RIGHT_RAW, 'shocked_blink_eyes',
     )
+    shocked_blink_face = apply_shocked_blink_seam_cleanup(
+        shocked_blink_face, 'shocked_blink_eyes'
+    )
     shocked_blink = apply_eyes(
         shocked, 'shocked_blink_eyes.png', SHOCKED_BLINK_LEFT_RAW,
         SHOCKED_BLINK_RIGHT_RAW, 'shocked_blink_eyes',
+    )
+    shocked_blink = apply_shocked_blink_seam_cleanup(
+        shocked_blink, 'shocked_blink_eyes'
     )
     shocked_talk = apply(shocked_face, 'shocked_talk_mouth_v3.png', MOUTH_BOX, SHOCKED_TALK_RAW, SHOCKED_TALK_WEIGHT, 'shocked_talk_mouth')
     shocked_blink_talk = apply(shocked_blink_face, 'shocked_talk_mouth_v3.png', MOUTH_BOX, SHOCKED_TALK_RAW, SHOCKED_TALK_WEIGHT, 'shocked_blink_talk_mouth')
@@ -611,7 +780,7 @@ def render(arr, size=None):
     return rgb if size is None else rgb.resize(size, Image.Resampling.LANCZOS)
 
 
-def save_gif(path, frames, durations, size=None, palette_regions=()):
+def save_gif(path, frames, durations, size=None, palette_regions=(), allow_identical_frame_merge=False):
     rendered = [render(frame, size=size) for frame in frames]
     sample_scale = min(1.0, 512 / rendered[0].width, 512 / rendered[0].height)
     sample_size = (max(1, round(rendered[0].width * sample_scale)), max(1, round(rendered[0].height * sample_scale)))
@@ -636,10 +805,16 @@ def save_gif(path, frames, durations, size=None, palette_regions=()):
     # data. Decode every frame before replacing a previously valid preview.
     with Image.open(tmp) as check:
         assert check.size == rendered[0].size, (path.name, check.size, rendered[0].size)
-        assert check.n_frames == len(rendered), (path.name, check.n_frames, len(rendered))
+        if allow_identical_frame_merge:
+            assert check.n_frames <= len(rendered), (path.name, check.n_frames, len(rendered))
+        else:
+            assert check.n_frames == len(rendered), (path.name, check.n_frames, len(rendered))
+        decoded_duration = 0
         for index in range(check.n_frames):
             check.seek(index)
             check.load()
+            decoded_duration += check.info.get('duration', 0)
+        assert decoded_duration == sum(durations), (path.name, decoded_duration, sum(durations))
     tmp.replace(path)
 
 
@@ -751,6 +926,38 @@ def save_blink_mask_reviews():
         ).save(OUT / f'{expression}_blink_mask_20x.png', optimize=True)
 
 
+def save_shocked_blink_seam_mask_review(states):
+    """Show the core eye mask and separately traced exterior seam patches."""
+    regions = (
+        ('left', (518, 143, 580, 180), SHOCKED_BLINK_LEFT_RAW, SHOCKED_BLINK_LEFT_SEAM_RAW),
+        ('right', (578, 143, 640, 180), SHOCKED_BLINK_RIGHT_RAW, SHOCKED_BLINK_RIGHT_SEAM_RAW),
+    )
+    scale, gap = 24, 28
+    panel_w = max(box[2] - box[0] for _, box, _, _ in regions) * scale
+    panel_h = (regions[0][1][3] - regions[0][1][1]) * scale
+    review = Image.new('RGB', (panel_w * 2, panel_h + gap), '#f7f7f7')
+    draw = ImageDraw.Draw(review)
+    state = states['shocked']['blink']
+    for index, (side, box, feature_mask, seam_mask) in enumerate(regions):
+        overlay = state.copy()
+        feature = feature_mask > 0
+        seam = seam_mask > 0
+        overlay[feature, :3] = np.rint(
+            overlay[feature, :3].astype(np.float32) * 0.52
+            + np.asarray((45, 200, 80), np.float32) * 0.48
+        ).astype(np.uint8)
+        overlay[seam, :3] = np.rint(
+            overlay[seam, :3].astype(np.float32) * 0.48
+            + np.asarray((230, 70, 210), np.float32) * 0.52
+        ).astype(np.uint8)
+        cut = Image.fromarray(overlay, 'RGBA').crop(box).convert('RGB')
+        cut = cut.resize((cut.width * scale, cut.height * scale), Image.Resampling.NEAREST)
+        x = index * panel_w
+        review.paste(cut, (x, gap))
+        draw.text((x + 6, 6), f'Shocked blink · {side} core (green), exterior seam patch (magenta)', fill='#222')
+    review.save(OUT / 'shocked_blink_seam_masks_24x.png', optimize=True)
+
+
 def save_expression_mask_reviews():
     """Show each expression's independent open and blink eye masks at 20x."""
     source = Image.new('RGBA', (W, H), '#f0f0f0')
@@ -840,6 +1047,195 @@ def save_gif_detail_reviews():
             tmp.replace(path)
 
 
+def save_source_donor_result_reviews(states):
+    """Save diagnosis panels from source through the final encoded states.
+
+    These are the primary visual reviews for the pose edit: each feature is
+    shown beside its independently aligned/color-matched donor, final state,
+    feature/protection/cleanup masks, changed-pixel boundary, and the donor
+    pixels that would spill outside the approved edit regions.
+    """
+    eye_boxes = {
+        'left': (518, 143, 580, 180),
+        'right': (578, 143, 640, 180),
+    }
+    eye_specs = {
+        'neutral': {
+            'left': [('blink', 'neutral_blink_eyes.png', NEUTRAL_BLINK_LEFT_RAW,
+                      NEUTRAL_BLINK_LEFT_SEAM_RAW, NEUTRAL_LEFT_FRINGE_GUARD,
+                      BASE, states['neutral']['blink'], 0)],
+            'right': [('blink', 'neutral_blink_eyes.png', NEUTRAL_BLINK_RIGHT_RAW,
+                       NEUTRAL_BLINK_RIGHT_SEAM_RAW, NEUTRAL_RIGHT_FRINGE_GUARD,
+                       BASE, states['neutral']['blink'], 1)],
+        },
+        'happy': {
+            'left': [('open', 'happy_eyes.png', HAPPY_OPEN_LEFT_RAW,
+                      HAPPY_OPEN_LEFT_SEAM_RAW, HAPPY_LEFT_FRINGE_GUARD,
+                      BASE, states['happy']['idle'], 0),
+                     ('blink', 'happy_blink_eyes.png', HAPPY_BLINK_LEFT_RAW,
+                      HAPPY_BLINK_LEFT_SEAM_RAW, HAPPY_LEFT_FRINGE_GUARD,
+                      states['happy']['idle'], states['happy']['blink'], 0)],
+            'right': [('open', 'happy_eyes.png', HAPPY_OPEN_RIGHT_RAW,
+                       HAPPY_OPEN_RIGHT_SEAM_RAW, HAPPY_RIGHT_FRINGE_GUARD,
+                       BASE, states['happy']['idle'], 1),
+                      ('blink', 'happy_blink_eyes.png', HAPPY_BLINK_RIGHT_RAW,
+                       HAPPY_BLINK_RIGHT_SEAM_RAW, HAPPY_RIGHT_FRINGE_GUARD,
+                       states['happy']['idle'], states['happy']['blink'], 1)],
+        },
+        'shocked': {
+            'left': [('open', 'shocked_eyes.png', LEFT_SHOCK_EYE,
+                      np.zeros((H, W), np.uint8), SHOCKED_LEFT_FRINGE_GUARD,
+                      BASE, states['shocked']['idle'], 0),
+                     ('blink', 'shocked_blink_eyes.png', SHOCKED_BLINK_LEFT_RAW,
+                      SHOCKED_BLINK_LEFT_SEAM_RAW, SHOCKED_LEFT_FRINGE_GUARD,
+                      states['shocked']['idle'], states['shocked']['blink'], 0)],
+            'right': [('open', 'shocked_eyes.png', RIGHT_SHOCK_EYE,
+                       np.zeros((H, W), np.uint8), SHOCKED_RIGHT_FRINGE_GUARD,
+                       BASE, states['shocked']['idle'], 1),
+                      ('blink', 'shocked_blink_eyes.png', SHOCKED_BLINK_RIGHT_RAW,
+                       SHOCKED_BLINK_RIGHT_SEAM_RAW, SHOCKED_RIGHT_FRINGE_GUARD,
+                       states['shocked']['idle'], states['shocked']['blink'], 1)],
+        },
+    }
+
+    def overlay_masks(source, feature, fringe, cleanup):
+        view = source.copy()
+        for mask, color in (
+            (feature > 0, (35, 205, 75)),
+            (fringe > 0, (245, 160, 25)),
+            (cleanup > 0, (225, 70, 205)),
+        ):
+            view[mask, :3] = np.rint(
+                view[mask, :3].astype(np.float32) * 0.5
+                + np.asarray(color, np.float32) * 0.5
+            ).astype(np.uint8)
+        return view
+
+    def boundary_overlay(source, result):
+        changed = np.any(source[:, :, :3] != result[:, :, :3], axis=2).astype(np.uint8)
+        edge = (changed > 0) & (cv2.erode(changed, np.ones((3, 3), np.uint8)) == 0)
+        view = source.copy()
+        view[edge] = (0, 255, 40, 255)
+        return view
+
+    def save_panel(path, rows, box, scale):
+        panel_w = (box[2] - box[0]) * scale
+        panel_h = (box[3] - box[1]) * scale
+        title_h, row_gap = 28, 8
+        headings = (
+            'input/source', 'aligned + color-matched donor', 'final composite',
+            'feature / strand guard / cleanup', 'changed-pixel boundary',
+            'donor differences outside approved regions',
+        )
+        sheet = Image.new(
+            'RGB', (panel_w * len(headings), (panel_h + title_h + row_gap) * len(rows)),
+            '#fafafa',
+        )
+        draw = ImageDraw.Draw(sheet)
+        for row_idx, (label, source, donor, result, feature, fringe, cleanup) in enumerate(rows):
+            y = row_idx * (panel_h + title_h + row_gap)
+            views = [
+                source,
+                donor,
+                result,
+                overlay_masks(source, feature, fringe, cleanup),
+                boundary_overlay(source, result),
+            ]
+            approved = (feature > 0) | (cleanup > 0)
+            unmasked_delta = np.any(donor[:, :, :3] != source[:, :, :3], axis=2) & ~approved
+            outside = source.copy()
+            outside[unmasked_delta, :3] = (235, 0, 185)
+            views.append(outside)
+            for col, (view, heading) in enumerate(zip(views, headings)):
+                x = col * panel_w
+                draw.text((x + 5, y + 5), f'{label} · {heading}', fill='#222')
+                crop = Image.fromarray(view, 'RGBA').crop(box).convert('RGB')
+                crop = crop.resize((panel_w, panel_h), Image.Resampling.NEAREST)
+                sheet.paste(crop, (x, y + title_h))
+        path.parent.mkdir(parents=True, exist_ok=True)
+        tmp = path.with_suffix('.png.tmp')
+        sheet.save(tmp, format='PNG', optimize=False)
+        with Image.open(tmp) as check:
+            check.verify()
+        tmp.replace(path)
+
+    review_files = []
+    for expression, sides in eye_specs.items():
+        for side, specs in sides.items():
+            rows = []
+            box = eye_boxes[side]
+            sample_box = (520, 147, 580, 178) if side == 'left' else (580, 147, 635, 178)
+            for label, donor_name, feature, cleanup, fringe, source, result, side_idx in specs:
+                aligned = load_eye_donor(donor_name, side_idx)
+                corrected_rgb, _ = color_correct(
+                    aligned, feature, EYES_BOX,
+                    f'review_{expression}_{side}_{label}', sample_box=sample_box,
+                )
+                corrected = aligned.copy()
+                corrected[:, :, :3] = corrected_rgb
+                rows.append((label, source, corrected, result, feature, fringe, cleanup))
+            path = OUT / f'{expression}_{side}_eye_20x_review.png'
+            save_panel(path, rows, box, 20)
+            review_files.append(path.name)
+
+    mouth_specs = {
+        'neutral': [('talk', 'neutral_talk_mouth.png', NEUTRAL_TALK_RAW,
+                     BASE, states['neutral']['talking'])],
+        'happy': [('smile', 'happy_mouth.png', HAPPY_CLOSED_RAW,
+                   BASE, states['happy']['idle']),
+                  ('talk', 'happy_talk_mouth.png', HAPPY_TALK_RAW,
+                   states['happy']['idle'], states['happy']['talking'])],
+        'shocked': [('surprised O', 'shocked_mouth.png', SHOCKED_O_RAW,
+                     BASE, states['shocked']['idle']),
+                    ('talk', 'shocked_talk_mouth_v3.png', SHOCKED_TALK_RAW,
+                     states['shocked']['idle'], states['shocked']['talking'])],
+    }
+    mouth_box = (545, 190, 620, 230)
+    for expression, specs in mouth_specs.items():
+        rows = []
+        for label, donor_name, feature, source, result in specs:
+            aligned = load_donor(donor_name, MOUTH_BOX)
+            corrected_rgb, _ = color_correct(
+                aligned, feature, MOUTH_BOX,
+                f'review_{expression}_mouth_{label}',
+            )
+            corrected = aligned.copy()
+            corrected[:, :, :3] = corrected_rgb
+            rows.append((label, source, corrected, result, feature,
+                         np.zeros((H, W), np.uint8), np.zeros((H, W), np.uint8)))
+        path = OUT / f'{expression}_mouth_20x_review.png'
+        save_panel(path, rows, mouth_box, 20)
+        review_files.append(path.name)
+    return review_files
+
+
+def save_shocked_eye_animation_review():
+    """Create a 20× animated eye crop from the encoded shocked GIF."""
+    regions = ((518, 143, 580, 180), (578, 143, 640, 180))
+    scale, gap = 20, 16
+    panel_w = max(box[2] - box[0] for box in regions) * scale
+    panel_h = (regions[0][3] - regions[0][1]) * scale
+    frames, durations = [], []
+    with Image.open(OUT / 'shocked/combined.gif') as gif:
+        for frame_index in range(gif.n_frames):
+            gif.seek(frame_index)
+            source = gif.convert('RGBA')
+            review = Image.new('RGBA', (panel_w * 2 + gap, panel_h), '#f0f0f0')
+            for side, box in enumerate(regions):
+                crop = source.crop(box).resize(
+                    ((box[2] - box[0]) * scale, (box[3] - box[1]) * scale),
+                    Image.Resampling.NEAREST,
+                )
+                review.alpha_composite(crop, (side * (panel_w + gap), 0))
+            frames.append(np.asarray(review, dtype=np.uint8))
+            durations.append(gif.info.get('duration', 100))
+    path = OUT / 'shocked_eyes_animation_20x.gif'
+    save_gif(path, frames, durations, size=None, allow_identical_frame_merge=True)
+    with Image.open(path) as check:
+        assert check.size == (panel_w * 2 + gap, panel_h), (path.name, check.size)
+        assert check.n_frames <= len(frames), (path.name, check.n_frames, len(frames))
+
+
 def write_outputs(states):
     qa = {
         'size': [W, H],
@@ -854,18 +1250,26 @@ def write_outputs(states):
                 'open_right_pixels': int(np.count_nonzero(RIGHT_OPEN_EYE)),
                 'blink_left_pixels': int(np.count_nonzero(NEUTRAL_BLINK_LEFT_RAW)),
                 'blink_right_pixels': int(np.count_nonzero(NEUTRAL_BLINK_RIGHT_RAW)),
+                'blink_seam_cleanup_left_outside_pixels': int(np.count_nonzero(NEUTRAL_BLINK_LEFT_SEAM_RAW)),
+                'blink_seam_cleanup_right_outside_pixels': int(np.count_nonzero(NEUTRAL_BLINK_RIGHT_SEAM_RAW)),
             },
             'happy': {
                 'open_left_pixels': int(np.count_nonzero(HAPPY_OPEN_LEFT_RAW)),
                 'open_right_pixels': int(np.count_nonzero(HAPPY_OPEN_RIGHT_RAW)),
                 'blink_left_pixels': int(np.count_nonzero(HAPPY_BLINK_LEFT_RAW)),
                 'blink_right_pixels': int(np.count_nonzero(HAPPY_BLINK_RIGHT_RAW)),
+                'open_seam_cleanup_left_outside_pixels': int(np.count_nonzero(HAPPY_OPEN_LEFT_SEAM_RAW)),
+                'open_seam_cleanup_right_outside_pixels': int(np.count_nonzero(HAPPY_OPEN_RIGHT_SEAM_RAW)),
+                'blink_seam_cleanup_left_outside_pixels': int(np.count_nonzero(HAPPY_BLINK_LEFT_SEAM_RAW)),
+                'blink_seam_cleanup_right_outside_pixels': int(np.count_nonzero(HAPPY_BLINK_RIGHT_SEAM_RAW)),
             },
             'shocked': {
                 'open_left_pixels': int(np.count_nonzero(LEFT_SHOCK_EYE)),
                 'open_right_pixels': int(np.count_nonzero(RIGHT_SHOCK_EYE)),
                 'blink_left_pixels': int(np.count_nonzero(SHOCKED_BLINK_LEFT_RAW)),
                 'blink_right_pixels': int(np.count_nonzero(SHOCKED_BLINK_RIGHT_RAW)),
+                'blink_seam_cleanup_left_outside_pixels': int(np.count_nonzero(SHOCKED_BLINK_LEFT_SEAM_RAW)),
+                'blink_seam_cleanup_right_outside_pixels': int(np.count_nonzero(SHOCKED_BLINK_RIGHT_SEAM_RAW)),
             },
         },
         'full_replacement_checks': {
@@ -879,10 +1283,22 @@ def write_outputs(states):
         },
         'gifs': {},
     }
-    allowed_masks = {
+    feature_masks = {
         'neutral': (NEUTRAL_BLINK_RAW > 0) | (NEUTRAL_TALK_RAW > 0),
         'happy': (HAPPY_OPEN_RAW > 0) | (HAPPY_BLINK_RAW > 0) | (HAPPY_CLOSED_RAW > 0) | (HAPPY_TALK_RAW > 0),
         'shocked': (SHOCK_EYE_RAW > 0) | (SHOCKED_BLINK_RAW > 0) | (SHOCKED_O_RAW > 0) | (SHOCKED_TALK_RAW > 0),
+    }
+    explicit_seam_masks = {
+        'neutral': (NEUTRAL_BLINK_LEFT_SEAM_RAW > 0) | (NEUTRAL_BLINK_RIGHT_SEAM_RAW > 0),
+        'happy': (
+            (HAPPY_OPEN_LEFT_SEAM_RAW > 0) | (HAPPY_OPEN_RIGHT_SEAM_RAW > 0)
+            | (HAPPY_BLINK_LEFT_SEAM_RAW > 0) | (HAPPY_BLINK_RIGHT_SEAM_RAW > 0)
+        ),
+        'shocked': (SHOCKED_BLINK_LEFT_SEAM_RAW > 0) | (SHOCKED_BLINK_RIGHT_SEAM_RAW > 0),
+    }
+    allowed_masks = {
+        name: feature_masks[name] | explicit_seam_masks[name]
+        for name in feature_masks
     }
     for expression, group in states.items():
         qa['states'][expression] = {}
@@ -892,13 +1308,18 @@ def write_outputs(states):
             assert arr.shape == BASE.shape
             assert np.array_equal(arr[:, :, 3], BASE[:, :, 3])
             changed = np.any(arr[:, :, :3] != BASE[:, :, :3], axis=2)
-            outside = int(np.count_nonzero(changed & ~allowed_masks[expression]))
-            assert outside == 0, (expression, state, outside)
+            outside_feature = int(np.count_nonzero(changed & ~feature_masks[expression]))
+            outside_allowed = int(np.count_nonzero(changed & ~allowed_masks[expression]))
+            seam_cleanup_changes = int(np.count_nonzero(changed & explicit_seam_masks[expression]))
+            assert outside_allowed == 0, (expression, state, outside_allowed)
+            assert outside_feature == seam_cleanup_changes, (expression, state, outside_feature, seam_cleanup_changes)
             save_png(OUT / f'{expression}_{state}.png', arr)
             save_png(published_folder / f'{state}.png', arr)
             qa['states'][expression][state] = {
                 'changed_pixels': int(changed.sum()),
-                'changed_outside_feature_masks': outside,
+                'changed_outside_feature_masks': outside_feature,
+                'changed_in_explicit_outside_mask_seam_cleanup': seam_cleanup_changes,
+                'changed_outside_feature_and_seam_masks': outside_allowed,
                 'alpha_identical': True,
             }
         folder = OUT / expression
@@ -918,7 +1339,8 @@ def write_outputs(states):
             with Image.open(gif_path) as gif:
                 assert gif.size == (W, H), (gif_name, gif.size)
                 qa['gifs'][f'{expression}/{gif_name}'] = {'size': list(gif.size), 'frames': gif.n_frames}
-        Image.fromarray(group['idle'], 'RGBA').save(ROOT / f'static/poses/document_reading/{expression}.png', optimize=False)
+        if expression != 'neutral':
+            save_png(ROOT / f'static/poses/document_reading/{expression}.png', group['idle'])
 
     all_three_path = OUT / 'all_three_native.gif'
     save_all_three_gif(all_three_path, states)
@@ -930,8 +1352,16 @@ def write_outputs(states):
     save_review(states)
     save_feature_reviews(states)
     save_blink_mask_reviews()
+    save_shocked_blink_seam_mask_review(states)
     save_expression_mask_reviews()
     save_gif_detail_reviews()
+    qa['source_donor_result_reviews'] = save_source_donor_result_reviews(states)
+    save_shocked_eye_animation_review()
+    with Image.open(OUT / 'shocked_eyes_animation_20x.gif') as gif:
+        qa['gifs']['shocked_eyes_animation_20x.gif'] = {
+            'size': list(gif.size), 'frames': gif.n_frames,
+            'source': 'decoded shocked/combined.gif',
+        }
     (OUT / 'QA.json').write_text(json.dumps(qa, indent=2) + '\n', encoding='utf-8')
     shutil.copy2(OUT / 'preview_fullbody.jpg', PUBLISHED / 'preview.jpg')
     print(json.dumps(qa, indent=2))
