@@ -76,9 +76,12 @@ RIGHT_EYE=[(592,153),(600,148),(612,148),(625,145),(632,148),(635,155),
 # Right of this line is foreground from the master, not material to transplant.
 # It is SHOCKED-specific: happy stays byte-identical to its previous build.
 SHOCKED_SOURCE_HAIR = [
-    (638,145),(637,155),(635,166),(632,176),(626,185),
-    (617,195),(607,206),(599,216),(590,226),
-    (590,239),(700,239),(700,140),(638,140),
+    # Traced against the ORIGINAL silhouette (not donor geometry).
+    # The previous contour was ~10 pixels too far right and barely covered the defect.
+    (635,140),(631,150),(627,156),(624,162),(620,170),
+    (617,175),(615,181),(613,186),(611,190),
+    (608,195),(603,201),(596,209),(589,216),(581,226),
+    (581,239),(700,239),(700,140),
 ]
 # All mouth selection vertices are inside the master jawline. Never copy donor hair.
 MOUTH=[(553,202),(558,199),(572,198),(589,198),(596,201),(596,207),
