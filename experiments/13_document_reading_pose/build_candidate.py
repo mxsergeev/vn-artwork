@@ -140,6 +140,35 @@ def transplant(source, aligned, name):
                 comparison.paste(shown(im,crop,magnification=zoom),(i*tile_w,22))
                 d.text((i*tile_w+5,5),title,fill="black")
             comparison.save(OUT/"shocked_cheek_before_after.png")
+        # Spatial audit: compare original and candidate with visible native coordinate grid.
+        audit_box = (584,145,656,233)
+        scale=7
+        reference=[("source",source),("aligned",aligned),("old",before if previous.exists() else result),
+                   ("candidate",result)]
+        tilew=(audit_box[2]-audit_box[0])*scale
+        tileh=(audit_box[3]-audit_box[1])*scale
+        debug=Image.new("RGB",(tilew*len(reference),tileh+26),"#eeeeee")
+        pen=ImageDraw.Draw(debug)
+        for j,(lab,img) in enumerate(reference):
+            ox=j*tilew
+            debug.paste(shown(img,audit_box,magnification=scale),(ox,26))
+            pen.text((ox+6,3),lab,fill="black")
+            for x in range(585,656,10):
+                dx=ox+(x-audit_box[0])*scale
+                pen.line((dx,26,dx,26+tileh),fill="#61b6f0",width=1)
+                pen.text((dx+1,14),str(x),fill="#333333")
+            for y in range(150,233,10):
+                dy=26+(y-audit_box[1])*scale
+                pen.line((ox,dy,ox+tilew,dy),fill="#61b6f0",width=1)
+                pen.text((ox+3,dy+2),str(y),fill="#333333")
+        debug.save(OUT/"shocked_cheek_coordinate_audit.png")
+        for y in (155,160,165,170,175,180,185,190,195,200,205,210,215,220):
+            rgb=source[y,585:653,:3].astype(float)
+            val=rgb.mean(axis=1)
+            small=[]
+            for x in range(605,648,3):
+                small.append((x,round(float(val[x-585]))))
+            print("source cheek row",y,small)
         print("shocked source foreground pixels restored",int(restore.sum()))
     assert np.array_equal(result[:,:,3],source[:,:,3])
     changed=np.any(result[:,:,:3]!=source[:,:,:3],axis=2)
