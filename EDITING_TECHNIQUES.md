@@ -2,6 +2,38 @@
 
 Use this with the [production workflow](README.md). Diagnose the actual pixels before selecting an operation. Work on one eye or mouth until its correction is demonstrated, then extend the method.
 
+## Generate and select donors
+
+### Define the expression and state
+
+Generate expressions that are immediately recognizable and somewhat exaggerated at normal display size. Define the emotion and the required eye/mouth state separately.
+
+| Feature | Required appearance |
+|---|---|
+| Expression | Clearly readable emotion through coordinated brows, eyes, and mouth. Prefer deliberate, somewhat exaggerated expression over subtle ambiguity. |
+| Open eyes | Visibly open; an expression-specific squint is acceptable only if it reads clearly as open. |
+| Closed eyes | Fully closed lids, with no visible iris or eye opening. Preserve the expression through lid shape and brows. |
+| Resting / `closed_mouth` | Closed or barely parted. Shocked may have a tiny opening, but must remain clearly distinct from its talking state. |
+| Talking / `open_mouth` | Clearly visible mouth opening at normal display size, while retaining the intended emotion. |
+
+The resting mouth is used in `idle` and `blink`; the talking mouth is used in `talking` and `blink_talking`. Filenames such as `closed_mouth` describe the intended state; they do not prove that the image satisfies it.
+
+### Generate the expression, then its animation variants
+
+Edit the actual master pose to obtain the expression donor. After the static expression is finished, use it as the reference for blink and talking donors. Specify the visible feature changes explicitly; "happy," "shocked," or "talking" alone is insufficient. Preserve character identity, style, pose, framing, and unaffected features.
+
+Example instructions:
+
+- **Shocked resting:** "Clearly surprised: raised brows, widened eyes, lips closed or only very slightly parted."
+- **Shocked talking:** "Preserve the surprised expression; make the mouth visibly open and clearly distinguishable from the resting mouth."
+- **Happy blink:** "Preserve the smile and happy expression; fully close both eyes with natural curved lids."
+
+### Check suitability before compositing
+
+Compare resting/talking and open/closed variants side by side at normal display size. Check that each variant conveys the intended emotion and that the eye and mouth states are unambiguous. Inspect enlarged crops for anatomy, line quality, and unwanted changes.
+
+Reject ambiguous states, weak expressions, or unintended identity/style changes. Sharpness alone does not make a donor suitable. Regenerate an unsuitable feature before investing in transplantation; reuse existing donors that meet these criteria.
+
 ## Separate the selections
 
 | Selection | Coordinates | Includes |

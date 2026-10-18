@@ -15,9 +15,9 @@ Identify the master pose, completed expressions, usable donors, current build, u
 | Stage | Action and completion evidence |
 |---|---|
 | Master pose | Reuse an existing pose, or edit the actual character image to create the requested pose. Review identity, proportions, clothing, framing, and transparency. |
-| Expression donor | Edit that exact master to obtain the requested emotion. Check geometry and feature quality before transplanting. |
+| Expression donor | Edit that exact master to obtain an immediately recognizable, somewhat exaggerated emotion at normal display size. Check geometry and feature quality against the [donor-generation criteria](EDITING_TECHNIQUES.md#generate-and-select-donors) before transplanting. |
 | Static expression | Align and transplant eyes, brows, mouth, and necessary facial shading onto the master. A broader face selection can be appropriate. Save the finished expression as its own source. |
-| Animation donors | Starting from each finished expression, reuse or generate only missing eye/mouth states. The generated image supplies donor features. |
+| Animation donors | Starting from each finished expression, reuse or generate only missing eye/mouth states. Preserve the emotion while making open/closed states clearly distinguishable, following the donor-generation criteria. The generated image supplies donor features. |
 | Four states | Build `idle`, `blink`, `talking`, and `blink_talking`. Keep the respective idle/speaking mouth when applying a blink. Reuse any state already represented by the source. |
 | Diagnose and review | Start with one feature. Separate old-feature removal, donor insertion, and source foreground restoration. Inspect intermediate stages, final PNGs, and decoded GIFs. |
 | Publish | Explicitly copy the selected reviewed candidate into `static/animation/`. Record actual user approval separately when given. |
