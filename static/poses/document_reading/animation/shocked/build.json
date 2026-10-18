@@ -1,0 +1,85 @@
+{
+  "master_size": [
+    1086,
+    1448
+  ],
+  "expression": "shocked",
+  "states": [
+    "idle",
+    "blink",
+    "talking",
+    "blink_talking"
+  ],
+  "animations": {
+    "blink": {
+      "sequence": [
+        "idle",
+        "blink",
+        "idle"
+      ],
+      "durations_ms": [
+        1200,
+        110,
+        1390
+      ]
+    },
+    "talk": {
+      "sequence": [
+        "idle",
+        "talking",
+        "idle",
+        "talking",
+        "idle"
+      ],
+      "durations_ms": [
+        640,
+        170,
+        120,
+        200,
+        920
+      ]
+    },
+    "combined": {
+      "sequence": [
+        "idle",
+        "talking",
+        "idle",
+        "talking",
+        "blink_talking",
+        "talking",
+        "idle",
+        "blink",
+        "idle"
+      ],
+      "durations_ms": [
+        700,
+        180,
+        120,
+        180,
+        100,
+        180,
+        300,
+        100,
+        700
+      ]
+    }
+  },
+  "eyes_changed_bbox": [
+    533,
+    143,
+    639,
+    189
+  ],
+  "mouth_changed_bbox": [
+    550,
+    196,
+    600,
+    225
+  ],
+  "integrity": {
+    "alpha_preserved": true,
+    "unchanged_regions_stable": true,
+    "gif_frame_palette_shared": true,
+    "blink_talking_uses_exact_blink_and_talking_features": true
+  }
+}
