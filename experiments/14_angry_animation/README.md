@@ -18,3 +18,5 @@ Run `python experiments/14_angry_animation/build.py` from the repository root. I
 ## Review status
 
 The user visually approved the eye-only blink candidate on 2026-10-18. Review compared the source, prior blink, and new composite at face scale and high zoom. The new candidate removes the open irises, keeps the angry brows and crossing hair in place, and avoids the previous broad skin/hair shift and blurred repair. Integrity checks remain separate from visual approval and do not establish image quality.
+
+The final postprocessor applies the eye composite to the idle mouth for `blink.png` and to the speaking mouth for `blink_talking.png`. It restores the source brow and hair after drawing the lids, and records checksums only after writing the final states and review images. Each build saves before/after face, eye, and mouth sheets plus final source/donor/result reviews under `output/`. The published Angry PNGs and GIFs were refreshed from these final states.

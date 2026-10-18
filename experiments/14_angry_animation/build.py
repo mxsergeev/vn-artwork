@@ -1,9 +1,17 @@
 #!/usr/bin/env python3
 from pathlib import Path
+import numpy as np
+from PIL import Image
 import sys
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from animation_builder import build
 from angry_visual_blink import apply_to_states
+
+published = Path(__file__).resolve().parents[2] / "static/animation/angry"
+before_states = {
+    state: np.asarray(Image.open(published / f"{state}.png").convert("RGBA"))
+    for state in ("idle", "blink", "talking", "blink_talking")
+}
 
 build({
     "experiment": "14_angry_animation",
@@ -46,5 +54,5 @@ build({
     "eye_sample_region": [460, 118, 606, 166],
     "mouth_sample_region": [515, 176, 570, 215],
     "notes": "Angry keeps the original teeth-baring expression for talking. The final blink uses a source-matched closed-eye donor, eye-local skin replacement, and separately restored source brow and hair foreground. Visual review is required; static mask checks do not establish quality.",
-})
-apply_to_states()
+}, print_report=False)
+apply_to_states(before_states)

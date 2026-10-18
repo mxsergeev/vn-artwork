@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 """Eye-only Angry blink reconstruction using a source-matched donor crop."""
 from pathlib import Path
+import hashlib
+import json
 
 import cv2
 import numpy as np
@@ -67,7 +69,7 @@ def make_closed_blink() -> np.ndarray:
         adjusted[skin(donor[:, :, :3])] += delta
         a = alpha[:, :, None]
         out = base.copy()
-        out[:, :, :3] = np.rint(source[:, :, :3].astype(np.float32) * (1-a) +
+        out[:, :, :3] = np.rint(base[:, :, :3].astype(np.float32) * (1-a) +
                                 np.clip(adjusted, 0, 255) * a).clip(0, 255).astype(np.uint8)
         return out
 
@@ -76,16 +78,7 @@ def make_closed_blink() -> np.ndarray:
     result = transfer_skin(source, left)
     result = transfer_skin(result, right)
 
-    # Keep exact source brow and hair strokes as foreground layers.
-    for polygons, threshold in ((BROW_POLYGONS, 225), (HAIR_POLYGONS, 230)):
-        traced = polygon_mask(source.shape[1::-1], polygons)
-        dark = np.max(source[:, :, :3], axis=2) < threshold
-        core = traced & dark
-        grown = cv2.dilate(core.astype(np.uint8), np.ones((3, 3), np.uint8)) > 0
-        restore = grown & cv2.dilate(traced.astype(np.uint8), np.ones((3, 3), np.uint8)).astype(bool)
-        result[restore, :3] = source[restore, :3]
-
-    # Place the closed lid lines over the repaired skin, while retaining crossing hair.
+    # Place the closed lid lines over the repaired skin.
     lids = polygon_mask(source.shape[1::-1], LID_POLYGONS)
     hair = polygon_mask(source.shape[1::-1], HAIR_POLYGONS)
     lids &= ~hair
@@ -94,31 +87,240 @@ def make_closed_blink() -> np.ndarray:
     a = alpha[:, :, None]
     result[:, :, :3] = np.rint(result[:, :, :3].astype(np.float32) * (1-a) +
                                donor[:, :, :3].astype(np.float32) * a).clip(0, 255).astype(np.uint8)
+
+    # Restore source brow and hair last so their antialiased edges stay in front.
+    for polygons, threshold in ((BROW_POLYGONS, 225), (HAIR_POLYGONS, 230)):
+        traced = polygon_mask(source.shape[1::-1], polygons)
+        dark = np.max(source[:, :, :3], axis=2) < threshold
+        core = traced & dark
+        grown = cv2.dilate(core.astype(np.uint8), np.ones((3, 3), np.uint8)) > 0
+        restore = grown & cv2.dilate(traced.astype(np.uint8), np.ones((3, 3), np.uint8)).astype(bool)
+        result[restore, :3] = source[restore, :3]
+
     result[:, :, 3] = source[:, :, 3]
     return result
 
 
-def apply_to_states() -> None:
+def _review_image(frames, before_states):
+    """Create reproducible face, eye, and mouth comparisons for all four states."""
+    OUT.mkdir(parents=True, exist_ok=True)
+    bg = "#f0f0f0"
+
+    def render(frame, box, scale):
+        crop = Image.fromarray(frame, "RGBA").crop(box)
+        matte = Image.new("RGBA", crop.size, bg)
+        matte.alpha_composite(crop)
+        return matte.convert("RGB").resize((crop.width * scale, crop.height * scale), Image.Resampling.NEAREST)
+
+    reviews = (
+        ("face", (434, 64, 640, 268), 2),
+        ("eyes_8x", DONOR_BOX, 8),
+        ("mouth_8x", (505, 174, 582, 219), 8),
+    )
+    for suffix, box, scale in reviews:
+        w, h = (box[2] - box[0]) * scale, (box[3] - box[1]) * scale
+        label_h = 26
+        sheet = Image.new("RGB", (w * 2, (h + label_h) * len(frames)), bg)
+        draw = ImageDraw.Draw(sheet)
+        for row, (state, after) in enumerate(frames.items()):
+            y = row * (h + label_h)
+            draw.text((5, y + 5), f"{state} — before", fill="#111")
+            draw.text((w + 5, y + 5), f"{state} — after", fill="#111")
+            sheet.paste(render(before_states[state], box, scale), (0, y + label_h))
+            sheet.paste(render(after, box, scale), (w, y + label_h))
+        sheet.save(OUT / f"angry_before_after_{suffix}.png", optimize=True)
+
+
+def _write_final_reviews(frames, source):
+    """Refresh the eye and four-state reviews from the actual final frames."""
+    donor = source.copy()
+    patch = np.asarray(Image.open(DONOR).convert("RGB"))
+    x0, y0, x1, y1 = DONOR_BOX
+    donor[y0:y1, x0:x1, :3] = patch
+    regions = (
+        ("left", (466, 118, 526, 164), LEFT_REGION + BROW_POLYGONS[:1] + HAIR_POLYGONS[:1] + LID_POLYGONS[:1]),
+        ("right", (530, 116, 596, 164), RIGHT_REGION + BROW_POLYGONS[1:] + HAIR_POLYGONS[1:] + LID_POLYGONS[1:]),
+    )
+    for side, box, polygons in regions:
+        x0, y0, x1, y1 = box
+        scale = 20
+        panels = []
+        for label, frame in (("SOURCE", source), ("CLOSED-EYE DONOR", donor), ("FINAL BLINK", frames["blink"])):
+            crop = Image.fromarray(frame, "RGBA").crop(box)
+            matte = Image.new("RGBA", crop.size, "#f0f0f0")
+            matte.alpha_composite(crop)
+            panels.append((label, matte.convert("RGB").resize((crop.width * scale, crop.height * scale), Image.Resampling.NEAREST)))
+        overlay = source.copy()
+        mask = polygon_mask(source.shape[1::-1], polygons)
+        overlay[mask, :3] = np.rint(overlay[mask, :3].astype(np.float32) * .45 + np.array([25, 235, 60]) * .55).astype(np.uint8)
+        crop = Image.fromarray(overlay, "RGBA").crop(box)
+        matte = Image.new("RGBA", crop.size, "#f0f0f0")
+        matte.alpha_composite(crop)
+        panels.append(("EDIT / RESTORE REGIONS", matte.convert("RGB").resize((crop.width * scale, crop.height * scale), Image.Resampling.NEAREST)))
+        panel_w, panel_h = panels[0][1].size
+        label_h = 28
+        board = Image.new("RGB", (panel_w * len(panels), panel_h + label_h), "#f0f0f0")
+        draw = ImageDraw.Draw(board)
+        for col, (label, panel) in enumerate(panels):
+            draw.text((col * panel_w + 5, 6), label, fill="#111")
+            board.paste(panel, (col * panel_w, label_h))
+        board.save(OUT / f"{side}_eye_20x_review.png", optimize=True)
+
+    # Rebuild the four-state contact sheet from the final frames.
+    face_box = (434, 64, 640, 268)
+    scale = 3
+    box_w, box_h = (face_box[2] - face_box[0]) * scale, (face_box[3] - face_box[1]) * scale
+    label_h = 28
+    board = Image.new("RGB", (box_w * 4, box_h + label_h), "#f0f0f0")
+    draw = ImageDraw.Draw(board)
+    for col, (state, frame) in enumerate(frames.items()):
+        crop = Image.fromarray(frame, "RGBA").crop(face_box)
+        matte = Image.new("RGBA", crop.size, "#f0f0f0")
+        matte.alpha_composite(crop)
+        panel = matte.convert("RGB").resize((box_w, box_h), Image.Resampling.NEAREST)
+        board.paste(panel, (col * box_w, label_h))
+        draw.text((col * box_w + 5, 6), state, fill="#111")
+    board.save(OUT / "four_states_face_comparison.png", optimize=True)
+
+
+def apply_to_states(before_states=None) -> None:
     blink = make_closed_blink()
     source = np.asarray(Image.open(SOURCE).convert("RGBA"))
     idle = np.asarray(Image.open(OUT / "idle.png").convert("RGBA"))
+    talking = np.asarray(Image.open(OUT / "talking.png").convert("RGBA"))
     changed = np.any(blink[:, :, :3] != source[:, :, :3], axis=2)
-    blink_talking = idle.copy()
+    # A blink preserves the idle mouth; blink_talking preserves the talking mouth.
+    blink_idle = idle.copy()
+    blink_idle[changed] = blink[changed]
+    blink_talking = talking.copy()
     blink_talking[changed] = blink[changed]
     OUT.mkdir(parents=True, exist_ok=True)
     Image.fromarray(blink, "RGBA").save(OUT / "angry_visual_blink.png")
+    Image.fromarray(blink_idle, "RGBA").save(OUT / "angry_visual_blink_idle.png")
     Image.fromarray(blink_talking, "RGBA").save(OUT / "angry_visual_blink_talking.png")
-    Image.fromarray(blink, "RGBA").save(OUT / "blink.png")
+    Image.fromarray(blink_idle, "RGBA").save(OUT / "blink.png")
     Image.fromarray(blink_talking, "RGBA").save(OUT / "blink_talking.png")
-    # Regenerate the experiment previews after replacing the generic blink.
+    frames = {
+        "idle": idle,
+        "blink": blink_idle,
+        "talking": talking,
+        "blink_talking": blink_talking,
+    }
+    _write_final_reviews(frames, source)
+    if before_states is not None:
+        _review_image(frames, before_states)
+
+    # Record hashes and state-to-state checks only after all final frames exist.
+    report_path = OUT / "QA.json"
+    report = json.loads(report_path.read_text(encoding="utf-8")) if report_path.exists() else {}
+    eye_polygons = LEFT_REGION + RIGHT_REGION + LID_POLYGONS
+    eye_area = polygon_mask(source.shape[1::-1], eye_polygons)
+    idle_changes = np.any(idle[:, :, :3] != source[:, :, :3], axis=2)
+    allowed = eye_area | idle_changes
+    protected_checks = {}
+    for side, brow, hair in (("viewer_left", BROW_POLYGONS[:1], HAIR_POLYGONS[:1]),
+                             ("viewer_right", BROW_POLYGONS[1:], HAIR_POLYGONS[1:])):
+        protected = np.zeros(source.shape[:2], dtype=bool)
+        for polygons, threshold in ((brow, 225), (hair, 230)):
+            traced = polygon_mask(source.shape[1::-1], polygons)
+            dark = np.max(source[:, :, :3], axis=2) < threshold
+            core = traced & dark
+            grown = cv2.dilate(core.astype(np.uint8), np.ones((3, 3), np.uint8)) > 0
+            protected |= grown & (cv2.dilate(traced.astype(np.uint8), np.ones((3, 3), np.uint8)) > 0)
+        changed_by_state = {}
+        for name, frame in frames.items():
+            changes = np.any(frame[:, :, :3] != source[:, :, :3], axis=2)
+            changed_by_state[name] = int(np.count_nonzero(changes & protected))
+            if changed_by_state[name]:
+                raise AssertionError(f"{name}: source {side} brow/hair pixels changed")
+        protected_checks[side] = {
+            "protected_source_pixels": int(protected.sum()),
+            "changed_pixels_by_state": changed_by_state,
+        }
+    final_states = {}
+    for name, frame in frames.items():
+        changes = np.any(frame[:, :, :3] != source[:, :, :3], axis=2)
+        final_states[name] = {
+            "changed_rgb_pixels": int(changes.sum()),
+            "outside_declared_edit_regions": int(np.count_nonzero(changes & ~allowed)),
+            "alpha_identical": bool(np.array_equal(frame[:, :, 3], source[:, :, 3])),
+            "output_sha256": hashlib.sha256((OUT / f"{name}.png").read_bytes()).hexdigest(),
+        }
+    report["states"] = final_states
+    report["eye_mask_pixels"] = int(eye_area.sum())
+    report["source_alpha_preserved_for_all_states"] = all(
+        item["alpha_identical"] for item in final_states.values()
+    )
+    report["protected_eye_regions_unchanged"] = protected_checks
+    report["eye_mask_sha256"] = hashlib.sha256(eye_area.astype(np.uint8).tobytes()).hexdigest()
+    eye_regions = {
+        side: polygon_mask(source.shape[1::-1], polygons)
+        for side, polygons in (("viewer_left", LEFT_REGION + LID_POLYGONS[:1]),
+                               ("viewer_right", RIGHT_REGION + LID_POLYGONS[1:]))
+    }
+    report["eye_mask_region_sha256"] = {
+        side: hashlib.sha256(mask.astype(np.uint8).tobytes()).hexdigest()
+        for side, mask in eye_regions.items()
+    }
+    report["eye_mask_region_pixels"] = {
+        side: int(mask.sum()) for side, mask in eye_regions.items()
+    }
+    x0, y0, x1, y1 = DONOR_BOX
+    ys, xs = np.where(eye_area)
+    report["mask_within_donor_crop"] = bool(
+        len(xs) and xs.min() >= x0 and xs.max() < x1 and ys.min() >= y0 and ys.max() < y1
+    )
+    if not report["mask_within_donor_crop"]:
+        raise AssertionError("Closed-eye feature mask extends beyond the source-matched donor crop")
+    report["visual_quality_status"] = (
+        "UNREVIEWED_BY_USER — final state comparisons regenerated; user sign-off is separate"
+    )
+    report["angry_visual_blink"] = {
+        "final_states_written_after_composite": True,
+        "state_mapping": {
+            "blink": "closed eyes + idle mouth",
+            "blink_talking": "closed eyes + talking mouth",
+        },
+        "alpha_matches_source": {
+            name: bool(np.array_equal(frame[:, :, 3], source[:, :, 3]))
+            for name, frame in frames.items()
+        },
+        "state_sha256": {
+            name: hashlib.sha256((OUT / f"{name}.png").read_bytes()).hexdigest()
+            for name in frames
+        },
+        "source_state_mouth_matches": {
+            "blink": bool(np.array_equal(frames["blink"][174:219, 505:582], idle[174:219, 505:582])),
+            "blink_talking": bool(np.array_equal(frames["blink_talking"][174:219, 505:582], talking[174:219, 505:582])),
+        },
+        "comparisons": [
+            "angry_before_after_face.png",
+            "angry_before_after_eyes_8x.png",
+            "angry_before_after_mouth_8x.png",
+            "left_eye_20x_review.png",
+            "right_eye_20x_review.png",
+            "four_states_face_comparison.png",
+        ] if before_states is not None else [],
+    }
+    report["angry_visual_blink"]["review_sha256"] = {
+        name: hashlib.sha256((OUT / name).read_bytes()).hexdigest()
+        for name in report["angry_visual_blink"]["comparisons"]
+    }
+    report_path.write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
+    print("Final Angry state checks:")
+    for name, checks in final_states.items():
+        print(f"  {name}: alpha={checks['alpha_identical']}, "
+              f"outside declared regions={checks['outside_declared_edit_regions']}, "
+              f"changed pixels={checks['changed_rgb_pixels']}")
+
+    # Regenerate previews from the final state mapping.
     from animation_builder import save_gif
-    talking = np.asarray(Image.open(OUT / "talking.png").convert("RGBA"))
-    save_gif(OUT / "blink.gif", [idle, blink, idle, blink, idle],
+    save_gif(OUT / "blink.gif", [idle, blink_idle, idle, blink_idle, idle],
              [1050, 130, 1250, 130, 1050])
     save_gif(OUT / "talk.gif", [idle, talking, idle, talking, idle],
              [260, 220, 220, 250, 900])
     save_gif(OUT / "combined.gif",
-             [idle, talking, idle, blink, idle, talking, blink_talking, talking, idle],
+             [idle, talking, idle, blink_idle, idle, talking, blink_talking, talking, idle],
              [450, 220, 300, 130, 430, 220, 130, 240, 1100])
 
 

@@ -291,7 +291,7 @@ def review_images(out: Path, base: np.ndarray, eye_frame: np.ndarray, mouth_fram
                     (max(0, mx0 - 8), max(0, my0 - 8), min(base.shape[1], mx1 + 8), min(base.shape[0], my1 + 8)))
 
 
-def build(config: dict) -> dict:
+def build(config: dict, print_report: bool = True) -> dict:
     here = Path(__file__).resolve().parent / config["experiment"]
     root = ROOT
     out = here / "output"
@@ -458,5 +458,6 @@ def build(config: dict) -> dict:
         "notes": config.get("notes", "")
     }
     (out / "QA.json").write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
-    print(json.dumps(report, indent=2))
+    if print_report:
+        print(json.dumps(report, indent=2))
     return report

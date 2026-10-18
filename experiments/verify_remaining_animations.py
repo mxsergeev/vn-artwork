@@ -2,6 +2,7 @@
 """Verify the published experiment 13–17 PNG and GIF copies."""
 from pathlib import Path
 import json
+import hashlib
 
 import numpy as np
 from PIL import Image
@@ -50,7 +51,11 @@ for slug, (experiment, source_name) in EXPRESSIONS.items():
         assert checks["protected_source_pixels"] > 0, f"{slug}/{region_name}: no protected source area"
         assert all(count == 0 for count in checks["changed_pixels_by_state"].values()), \
             f"{slug}/{region_name}: protected hair/strand pixels changed"
-    assert all(v["outside_feature_mask_pixels"] == 0 for v in report["states"].values())
+    if slug == "angry":
+        assert all(v["outside_declared_edit_regions"] == 0 for v in report["states"].values()), \
+            "angry: final layered blink changed pixels outside its declared eye/mouth regions"
+    else:
+        assert all(v["outside_feature_mask_pixels"] == 0 for v in report["states"].values())
     # The outside-mask assertion only verifies compositing integrity. It cannot
     # prove that all eyelashes/eyelids/mouth pixels were included in the masks.
     assert report["mask_within_donor_crop"] is True
@@ -58,6 +63,13 @@ for slug, (experiment, source_name) in EXPRESSIONS.items():
     for feature in ("left_eye", "right_eye", "mouth"):
         with Image.open(out / f"{feature}_20x_review.png") as review:
             review.verify()
+    if slug == "angry":
+        reviews = report["angry_visual_blink"]["review_sha256"]
+        for filename, expected_sha in reviews.items():
+            review_path = out / filename
+            assert review_path.is_file(), f"angry: missing final review {filename}"
+            assert hashlib.sha256(review_path.read_bytes()).hexdigest() == expected_sha, \
+                f"angry: final review {filename} is stale"
     for state in STATES:
         src = out / f"{state}.png"
         dst = published / f"{state}.png"
@@ -71,6 +83,10 @@ for slug, (experiment, source_name) in EXPRESSIONS.items():
             final_state = np.asarray(image)
         assert np.array_equal(final_state, source_state), f"{slug}/{state}: published copy differs from build output"
         assert np.array_equal(final_state[:, :, 3], source[:, :, 3]), f"{slug}/{state}: source alpha changed"
+        if slug == "angry":
+            digest = hashlib.sha256(src.read_bytes()).hexdigest()
+            assert report["states"][state]["output_sha256"] == digest, \
+                f"angry/{state}: final QA report is stale"
     for filename, expected_frames in GIFS.items():
         with Image.open(published / filename) as gif:
             assert gif.size == (1086, 1448), f"{slug}/{filename}: unexpected size {gif.size}"
