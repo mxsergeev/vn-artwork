@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
-"""Build expression-specific blink/talk states from source-anchored donor crops."""
+"""Build established pipelines from source-anchored donor crops.
+
+The mask-only path reproduces existing registered crops. For new donors follow
+README.md and use explicit alignment/repair layers; this path infers neither.
+"""
 from __future__ import annotations
 
 import hashlib

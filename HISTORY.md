@@ -1,6 +1,6 @@
 # Research history and archived methods
 
-**Historical record only.** Current workflow and techniques are in [README.md](README.md) and [EDITING_TECHNIQUES.md](EDITING_TECHNIQUES.md). Archived recommendations describe their original context, not current acceptance rules.
+**Historical record only.** The current production procedure is in [README.md](README.md). Archived recommendations describe their original context, not current acceptance rules.
 
 ## A. Original static-expression reproduction
 

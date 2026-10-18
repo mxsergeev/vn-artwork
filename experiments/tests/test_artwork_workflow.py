@@ -1,5 +1,6 @@
 """Behavioral checks for layered edits, stale builds, and publication boundaries."""
 import json
+import io
 import runpy
 import shutil
 import sys
@@ -47,8 +48,11 @@ class ArtworkWorkflowTests(unittest.TestCase):
 
     def review(self, approval='not_recorded'):
         data = self.record()
-        data['visual_review'] = {'status': 'reviewed', 'reviewer': 'test',
-                                 'artifact_set_sha256': data['artifact_set_sha256']}
+        data = pub.record_visual_review(data, 'test', {
+            'artifact_set_sha256': data['artifact_set_sha256'],
+            'checks': {name: {'status': 'pass', 'observation': 'Synthetic fixture checked.',
+                               'evidence': ['review.png', 'blink.gif']}
+                       for name in art.VISUAL_CRITERIA}})
         data['user_approval'] = {'status': approval, 'artwork_sha256': data['artwork_sha256']}
         art.write_json(self.folder/'build.json', data)
         return data
@@ -162,6 +166,57 @@ class ArtworkWorkflowTests(unittest.TestCase):
         self.assertIn('review.png', final['review_evidence'])
         self.assertFalse((destination/'review.png').exists())
         art.verify_manifest(destination)
+
+    def test_reviewed_note_alone_cannot_publish(self):
+        data = self.record()
+        data['visual_review'] = {'status': 'reviewed', 'reviewer': 'test',
+                                 'artifact_set_sha256': data['artifact_set_sha256']}
+        art.write_json(self.folder/'build.json', data)
+        with self.assertRaisesRegex(ValueError, 'structured visual review'):
+            pub.publish(self.folder, art.ROOT/'static/animation/blocked-test')
+
+    def test_failed_or_uncertain_visual_criterion_blocks_publication(self):
+        for status in ('fail', 'uncertain'):
+            data = self.review()
+            findings = {'artifact_set_sha256': data['artifact_set_sha256'],
+                        'checks': data['visual_review']['checks']}
+            findings['checks']['source_removal']['status'] = status
+            findings['checks']['source_removal']['observation'] = 'Old feature remains or cannot be ruled out.'
+            updated = pub.record_visual_review(data, 'test', findings)
+            art.write_json(self.folder/'build.json', updated)
+            art.verify_manifest(self.folder)  # Rejected artwork can still have valid integrity.
+            with self.assertRaisesRegex(ValueError, 'failed or uncertain'):
+                pub.publish(self.folder, art.ROOT/'static/animation/blocked-test')
+
+    def test_visual_review_requires_current_recorded_evidence(self):
+        data = self.review()
+        findings = {'artifact_set_sha256': 'old-build', 'checks': data['visual_review']['checks']}
+        with self.assertRaisesRegex(ValueError, 'different artifacts'):
+            pub.record_visual_review(data, 'test', findings)
+        findings['artifact_set_sha256'] = data['artifact_set_sha256']
+        findings['checks']['geometry']['evidence'] = ['unrecorded.png']
+        with self.assertRaisesRegex(ValueError, 'recorded image'):
+            pub.record_visual_review(data, 'test', findings)
+
+    def test_cli_review_template_records_uncertainty_without_publishing(self):
+        self.record()
+        form = self.folder/'visual_review.json'
+        with patch.object(sys, 'argv', ['publish_artwork.py', str(self.folder),
+                                       '--review-template', str(form)]), patch('sys.stdout', new=io.StringIO()):
+            pub.main()
+        findings = json.loads(form.read_text())
+        self.assertEqual(set(findings['checks']), set(art.VISUAL_CRITERIA))
+        for item in findings['checks'].values():
+            item.update(observation='Fixture needs further visual inspection.', evidence=['review.png'])
+        art.write_json(form, findings)
+        with patch.object(sys, 'argv', ['publish_artwork.py', str(self.folder),
+                                       '--reviewed-by', 'test', '--review-file', str(form)]), \
+                patch('sys.stdout', new=io.StringIO()):
+            pub.main()
+        recorded = json.loads((self.folder/'build.json').read_text())
+        self.assertEqual(recorded['visual_review']['status'], 'uncertain')
+        with self.assertRaisesRegex(ValueError, 'failed or uncertain'):
+            pub.publish(self.folder, art.ROOT/'static/animation/blocked-test')
 
 
 if __name__ == '__main__':

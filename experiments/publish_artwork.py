@@ -7,7 +7,21 @@ import shutil
 import tempfile
 from pathlib import Path
 
-from artwork_tools import ROOT, STATES, GIFS, digest, local_path, verify_manifest, write_json
+from artwork_tools import (ROOT, STATES, GIFS, VISUAL_CRITERIA, digest, local_path,
+                           verify_manifest, validate_visual_review, write_json)
+
+
+def record_visual_review(data, reviewer, findings):
+    if findings.get('artifact_set_sha256') != data['artifact_set_sha256']:
+        raise ValueError('Review file belongs to different artifacts; regenerate the template and inspect this build')
+    checks = findings.get('checks', {})
+    statuses = {item.get('status') for item in checks.values()}
+    verdict = 'failed' if 'fail' in statuses else 'uncertain' if 'uncertain' in statuses else 'passed'
+    updated = copy.deepcopy(data)
+    updated['visual_review'] = {'status': verdict, 'reviewer': reviewer,
+                               'artifact_set_sha256': data['artifact_set_sha256'], 'checks': checks}
+    validate_visual_review(updated)
+    return updated
 
 
 def publish(candidate, destination):
@@ -15,7 +29,8 @@ def publish(candidate, destination):
     manifest = json.loads((candidate/'build.json').read_text(encoding='utf-8'))
     integrity = verify_manifest(candidate, manifest)
     review = manifest['visual_review']
-    if review.get('status') != 'reviewed' or review.get('artifact_set_sha256') != manifest['artifact_set_sha256']:
+    validate_visual_review(manifest, require_pass=True)
+    if review.get('artifact_set_sha256') != manifest['artifact_set_sha256']:
         raise ValueError('Record visual review of these exact artifacts before publication')
     if manifest['user_approval'].get('status') == 'not_approved':
         raise ValueError('This artwork is explicitly NOT APPROVED')
@@ -64,7 +79,8 @@ def main():
     parser.add_argument('candidate', type=Path)
     parser.add_argument('--destination', type=Path)
     parser.add_argument('--reviewed-by', help='Record an actual visual review; does not publish')
-    parser.add_argument('--review-note', help='Regions inspected, result and unresolved defects')
+    parser.add_argument('--review-file', type=Path, help='JSON with artifact_set_sha256 and six criterion findings')
+    parser.add_argument('--review-template', type=Path, help='Write a blank review form for this exact candidate')
     approval = parser.add_mutually_exclusive_group()
     approval.add_argument('--approval-note', help='Record explicit user approval; quote or identify its evidence')
     approval.add_argument('--not-approved-note', help='Record rejection/unresolved artwork')
@@ -73,11 +89,21 @@ def main():
     path = folder/'build.json'
     data = json.loads(path.read_text(encoding='utf-8'))
     verify_manifest(folder, data)
+    if args.review_template:
+        if args.review_template.exists() or args.review_template.resolve() == path:
+            parser.error('Review template destination must be a new file')
+        if args.reviewed_by or args.review_file or args.destination or args.approval_note or args.not_approved_note:
+            parser.error('--review-template is a separate operation')
+        write_json(args.review_template, {'artifact_set_sha256': data['artifact_set_sha256'],
+                   'checks': {name: {'status': 'uncertain', 'observation': '', 'evidence': []}
+                              for name in VISUAL_CRITERIA}})
+        print(f'Wrote blank visual review to {args.review_template}; inspect and complete all six criteria')
+        return
+    if bool(args.reviewed_by) != bool(args.review_file):
+        parser.error('--reviewed-by and --review-file must be used together')
     if args.reviewed_by:
-        if not args.review_note:
-            parser.error('--reviewed-by requires --review-note')
-        data['visual_review'] = {'status': 'reviewed', 'reviewer': args.reviewed_by,
-                                 'note': args.review_note, 'artifact_set_sha256': data['artifact_set_sha256']}
+        data = record_visual_review(data, args.reviewed_by,
+                                    json.loads(args.review_file.read_text(encoding='utf-8')))
     if args.approval_note or args.not_approved_note:
         data['user_approval'] = {'status': 'approved' if args.approval_note else 'not_approved',
                                  'note': args.approval_note or args.not_approved_note,

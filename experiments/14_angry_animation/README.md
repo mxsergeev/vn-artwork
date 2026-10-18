@@ -20,4 +20,4 @@ python experiments/14_angry_animation/build.py
 
 Writes candidates and review files to ignored `output/`. Published frames supply the before/after comparison baseline; final states are built from the master and donors.
 
-See the [workflow](../../README.md), [techniques](../../EDITING_TECHNIQUES.md), and explicit publication command there.
+Follow the [production manual](../../README.md), including its explicit publication procedure.

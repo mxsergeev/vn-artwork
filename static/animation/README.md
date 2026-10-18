@@ -17,7 +17,7 @@ The default pose has eight existing expression sets. Each contains four 1086×14
 
 Read each set's `build.json` for file identity, source, visual review, and user approval. Treat `existing_snapshot` as an inventory record. Treat unrecorded edit-region coverage as unmeasured.
 
-Builders and preview commands produce candidates under ignored experiment output folders. Publication is explicit through `experiments/publish_artwork.py`; inspect the exact build before recording review. See the shared [workflow](../../README.md) and [editing techniques](../../EDITING_TECHNIQUES.md).
+Builders and preview commands produce candidates under ignored experiment output folders. Publication is explicit through `experiments/publish_artwork.py`; inspect the exact build before recording review. Follow the [production manual](../../README.md).
 
 Track selected states, supported previews, and build records here. Keep alternate renders and review panels in ignored experiment output folders.
 

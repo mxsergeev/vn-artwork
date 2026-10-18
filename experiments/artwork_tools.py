@@ -22,6 +22,38 @@ from PIL import Image, ImageDraw
 
 STATES = ('idle', 'blink', 'talking', 'blink_talking')
 GIFS = ('blink.gif', 'talk.gif', 'combined.gif')
+VISUAL_CRITERIA = ('geometry', 'source_removal', 'foreground', 'joins',
+                   'expression_states', 'animation')
+
+
+def validate_visual_review(data, *, require_pass=False):
+    """Check review evidence and verdict consistency; cannot judge the pixels."""
+    review = data.get('visual_review', {})
+    if review.get('status') not in ('passed', 'failed', 'uncertain'):
+        if require_pass:
+            raise ValueError('Publication requires a structured visual review with a passing verdict')
+        return
+    checks = review.get('checks', {})
+    if set(checks) != set(VISUAL_CRITERIA) or not str(review.get('reviewer', '')).strip():
+        raise ValueError('Visual review requires a reviewer and all six criteria')
+    evidence = {**data.get('artifacts', {}), **data.get('review_evidence', {})}
+    for name, check in checks.items():
+        if (check.get('status') not in ('pass', 'fail', 'uncertain')
+                or not str(check.get('observation', '')).strip()
+                or not isinstance(check.get('evidence'), list) or not check['evidence']):
+            raise ValueError(f'{name}: provide pass/fail/uncertain, an observation, and artifact evidence')
+        for item in check['evidence']:
+            if not isinstance(item, str) or item not in evidence or Path(item).suffix.lower() not in ('.png', '.jpg', '.gif'):
+                raise ValueError(f'{name}: evidence must name a recorded image: {item}')
+            origin = data.get('candidate_record')
+            if origin and origin.get('artifacts', {}).get(item) != evidence[item]:
+                raise ValueError(f'{name}: published review evidence differs from the candidate')
+    statuses = {check['status'] for check in checks.values()}
+    expected = 'failed' if 'fail' in statuses else 'uncertain' if 'uncertain' in statuses else 'passed'
+    if review['status'] != expected:
+        raise ValueError('Visual verdict disagrees with its criterion results')
+    if require_pass and expected != 'passed':
+        raise ValueError('Visual review has failed or uncertain criteria; repair and review before publication')
 
 
 def sha256(path):
@@ -278,12 +310,13 @@ def verify_manifest(folder, manifest=None, *, check_inputs=True):
     if digest(artwork) != data['artwork_sha256']:
         raise ValueError('Manifest artwork identity is inconsistent')
     review = data.get('visual_review', {})
-    if review.get('status') == 'reviewed' and review.get('artifact_set_sha256') != data['artifact_set_sha256']:
+    if review.get('status') in ('reviewed', 'passed', 'failed', 'uncertain') and review.get('artifact_set_sha256') != data['artifact_set_sha256']:
         origin = data.get('candidate_record', {})
         if (review.get('artifact_set_sha256') != origin.get('artifact_set_sha256')
                 or digest(origin.get('artifacts', {})) != origin.get('artifact_set_sha256')
                 or any(origin['artifacts'].get(k) != v for k, v in data['artifacts'].items())):
             raise ValueError('Visual review belongs to different artifacts')
+    validate_visual_review(data)
     approval = data.get('user_approval', {})
     if approval.get('status') in ('approved', 'not_approved') and approval.get('artwork_sha256') != data['artwork_sha256']:
         raise ValueError('User approval/rejection belongs to different artwork')

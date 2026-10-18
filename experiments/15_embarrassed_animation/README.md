@@ -20,4 +20,4 @@ python experiments/15_embarrassed_animation/build.py
 
 Writes the four standard PNG states, native GIFs, review images, declared regions, and a manifest to ignored `output/`. Historical output names remain available. Building does not publish.
 
-Follow the shared [workflow](../../README.md) and [techniques](../../EDITING_TECHNIQUES.md).
+Follow the [production manual](../../README.md).

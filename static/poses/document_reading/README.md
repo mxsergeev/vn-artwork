@@ -9,4 +9,4 @@
 | Animations | Not available. |
 | Next action | Inspect the neutral master, then generate the missing expression donors. |
 
-Use the [production workflow](../../../README.md) and [editing guide](../../../EDITING_TECHNIQUES.md).
+Follow the [production manual](../../../README.md).
