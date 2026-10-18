@@ -13,6 +13,7 @@ build({
     "mouth_box": [505, 174, 582, 219],
     "eye_regions": {
         "viewer_left": {
+            "clip_y": [133, None],
             "polygons": [
                 [(470,151),(472,142),(477,138),(485,135),(493,135),(500,137),(507,140),(514,144),(518,149),(516,154),(510,157),(502,158),(493,158),(485,157),(478,155),(473,153)],
                 [(463,151),(464,145),(468,140),(473,139),(477,143),(477,150),(472,154),(468,155),(464,154)],  # blush-side lash tip; avoids the fringe
@@ -24,6 +25,7 @@ build({
             "feather": 1.05,
         },
         "viewer_right": {
+            "clip_y": [130, 153],
             "polygons": [
                 [(537,143),(539,134),(546,130),(554,128),(563,127),(572,128),(579,130),(583,132),(586,136),(588,141),(588,146),(583,151),(577,153),(568,155),(559,155),(550,153),(543,149)],
                 [(580,137),(582,134),(585,133),(588,136),(589,140),(588,144),(585,146),(581,144)],  # lifted outer lash below the protected strand
@@ -38,5 +40,5 @@ build({
     "mouth_polygon": [(523,188),(526,183),(532,181),(541,180),(551,181),(560,184),(564,188),(563,196),(560,201),(552,204),(541,203),(531,201),(526,197),(524,192)],
     "eye_sample_region": [460, 118, 606, 166],
     "mouth_sample_region": [515, 178, 570, 215],
-    "notes": "Embarrassed uses separately traced raised-eye contours and upper-lash arcs, with its lifted outer tips included. The raised brows, hair, blush, and cheek shading remain outside the masks; the source's small open mouth is reused for talking.",
+    "notes": "Embarrassed uses separately traced raised-eye contours and upper-lash arcs, with its lifted outer tips included. Per-eye bounds trim the upper hair and right under-eye skin while retaining the complete left-eye lower contour. The source's small open mouth is reused for talking.",
 })

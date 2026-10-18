@@ -13,6 +13,7 @@ build({
     "mouth_box": [505, 174, 582, 219],
     "eye_regions": {
         "viewer_left": {
+            "clip_y": [134, None],
             "polygons": [
                 [(470,151),(472,142),(478,138),(486,136),(494,136),(501,138),(508,141),(514,145),(519,150),(518,154),(512,157),(504,159),(495,159),(487,157),(479,155),(473,153)],
                 [(463,151),(465,146),(470,141),(475,140),(479,144),(478,151),(473,155),(468,156),(464,154)],  # compressed strained-eye lash tip
@@ -24,6 +25,7 @@ build({
             "feather": 0.95,
         },
         "viewer_right": {
+            "clip_y": [130, 152],
             "polygons": [
                 [(537,143),(539,134),(545,130),(553,127),(562,126),(571,126),(578,128),(582,131),(585,135),(588,140),(588,147),(584,152),(577,155),(569,156),(560,155),(551,153),(544,149)],
                 [(579,138),(581,135),(584,134),(587,137),(588,141),(587,145),(584,147),(580,145)],  # narrow clenched-eye outer corner below the protected strand
@@ -38,5 +40,5 @@ build({
     "mouth_polygon": [(507,188),(509,182),(515,179),(527,176),(542,176),(558,179),(570,183),(575,188),(573,195),(568,201),(559,205),(547,208),(535,208),(524,205),(515,202),(509,197)],
     "eye_sample_region": [460, 118, 606, 166],
     "mouth_sample_region": [510, 176, 580, 215],
-    "notes": "Strained Smile uses separate compressed-eye and upper-lash contours fitted to each squint, with the outer hair strand protected. Its lower edge preserves under-eye skin; the toothy smile remains the talking state.",
+    "notes": "Strained Smile uses separate compressed-eye and upper-lash contours fitted to each squint. Per-eye bounds trim the upper hair and the right under-eye edge; the complete left lower contour remains to hide the source eye. The toothy smile remains the talking state.",
 })

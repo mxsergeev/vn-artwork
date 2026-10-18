@@ -36,6 +36,31 @@ def polygon_mask(size: tuple[int, int], polygons: list[list[list[int]]],
     return np.clip(distance / feather, 0.0, 1.0).astype(np.float32)
 
 
+def clip_mask_y(mask: np.ndarray, bounds: list[int | None], feather: float,
+                name: str) -> np.ndarray:
+    """Clip one expression's eye contour vertically, then feather the new edge."""
+    if len(bounds) != 2:
+        raise ValueError(f"{name}: clip_y must be [min_y, max_y]")
+    min_y, max_y = bounds
+    h = mask.shape[0]
+    if min_y is not None and not 0 <= min_y < h:
+        raise ValueError(f"{name}: invalid eye_clip_y minimum {min_y}")
+    if max_y is not None and not 0 < max_y <= h:
+        raise ValueError(f"{name}: invalid eye_clip_y maximum {max_y}")
+    if min_y is not None and max_y is not None and min_y >= max_y:
+        raise ValueError(f"{name}: empty eye_clip_y interval {bounds}")
+
+    binary = (mask > 0).astype(np.uint8)
+    if min_y is not None:
+        binary[:min_y, :] = 0
+    if max_y is not None:
+        binary[max_y:, :] = 0
+    if not np.any(binary):
+        raise ValueError(f"{name}: eye_clip_y removed the entire expression-specific mask")
+    distance = cv2.distanceTransform(binary, cv2.DIST_L2, 5)
+    return np.clip(distance / feather, 0.0, 1.0).astype(np.float32)
+
+
 def assert_mask_fits_donor(mask: np.ndarray, box: list[int], name: str) -> None:
     """A mask cannot transplant pixels that lie outside the actual donor crop."""
     x0, y0, x1, y1 = box
@@ -284,11 +309,19 @@ def build(config: dict) -> dict:
     global_eye_protect = config.get("eye_protect", [])
     for eye_name, region in config["eye_regions"].items():
         protect_polygons = [*global_eye_protect, *region.get("protect", [])]
-        eye_components[eye_name] = polygon_mask(
+        mask = polygon_mask(
             (w, h), region["polygons"],
             protect_polygons,
             region.get("feather", config.get("eye_feather", 1.1)),
         )
+        if "clip_y" in region:
+            mask = clip_mask_y(
+                mask,
+                region["clip_y"],
+                region.get("feather", config.get("eye_feather", 1.1)),
+                f"{config['slug']}/{eye_name}",
+            )
+        eye_components[eye_name] = mask
         if protect_polygons:
             protected_eye_components[eye_name] = polygon_mask(
                 (w, h), protect_polygons, [], 1.0
@@ -411,6 +444,9 @@ def build(config: dict) -> dict:
         },
         "eye_mask_region_pixels": {
             name: int(np.count_nonzero(mask)) for name, mask in eye_components.items()
+        },
+        "eye_mask_clip_y": {
+            name: region.get("clip_y") for name, region in config["eye_regions"].items()
         },
         "eye_preserved_source_pixels": eye_preserved,
         "protected_eye_regions_unchanged": protected_eye_checks,

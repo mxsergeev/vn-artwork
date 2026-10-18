@@ -13,6 +13,7 @@ build({
     "mouth_box": [505, 174, 582, 219],
     "eye_regions": {
         "viewer_left": {
+            "clip_y": [136, None],
             "polygons": [
                 [(470,152),(472,144),(477,140),(484,138),(492,137),(500,138),(507,141),(512,145),(518,150),(517,155),(511,158),(503,159),(495,159),(487,158),(479,156),(473,154)],
                 [(464,149),(465,143),(469,140),(474,140),(478,144),(477,150),(472,154),(468,155),(464,152)],  # angled lash tip on this angry donor
@@ -24,6 +25,7 @@ build({
             "feather": 1.0,
         },
         "viewer_right": {
+            "clip_y": [132, 152],
             "polygons": [
                 [(539,151),(540,142),(543,137),(549,133),(556,130),(564,128),(572,128),(578,129),(582,131),(584,134),(584,138),(582,143),(579,148),(574,152),(566,155),(557,156),(549,155),(544,153)],
                 [(579,138),(581,135),(583,134),(584,137),(583,141),(581,144),(579,143)],  # outer lash tip ends at the protected hair edge
@@ -42,5 +44,5 @@ build({
     "mouth_polygon": [(520,182),(523,178),(531,176),(543,176),(555,179),(562,183),(564,190),(562,197),(557,202),(549,205),(539,204),(530,202),(524,198),(521,191)],
     "eye_sample_region": [460, 118, 606, 166],
     "mouth_sample_region": [515, 176, 570, 215],
-    "notes": "Angry keeps the original teeth-baring expression for talking. Distinct upper-lash contours close each eye beneath the furrowed brows; the dark brow trace is restored, and the outer-eye contour stops before the source hair strand.",
+    "notes": "Angry keeps the original teeth-baring expression for talking. Distinct upper-lash contours and per-eye vertical bounds close each eye beneath the furrowed brows; the dark brow trace is restored. The 20x comparisons show the preserved brow and the complete closed lash.",
 })
