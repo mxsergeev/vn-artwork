@@ -6,10 +6,8 @@
 | Usable donors | `../04_source_anchored_animation/assets/eyes_closed_donor.png` and `approved_talking.png`. |
 | Status | Established Neutral reference. |
 | Current build | Ignored `output/build.json` after the command below; published identity is recorded alongside the static assets. |
-| Defects | No new defect assessment in this cleanup; read existing artwork before changing it. |
-| Visual review | Historically reviewed; new candidate builds require their own review. |
+| Visual review | See `static/animation/neutral/build.json`; inspect candidate PNGs and decoded GIFs before publication. |
 | User approval | Talking artifact was historically approved; no blanket approval inferred. |
-| Next action | Build only when needed; compare candidate to the existing Neutral assets. |
 
 ## Local method
 
@@ -23,4 +21,4 @@ python experiments/10_neutral_blink_refined/build.py
 
 Writes the four standard PNG states, native GIFs, review images, declared regions, and a manifest to ignored `output/`. Historical output names remain available. Building does not publish.
 
-Follow the shared [workflow](../../README.md) and [techniques](../../EDITING_TECHNIQUES.md). Previous iteration measurements belong to [history](../../HISTORY.md), not acceptance criteria.
+Follow the shared [workflow](../../README.md) and [techniques](../../EDITING_TECHNIQUES.md).

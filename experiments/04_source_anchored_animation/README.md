@@ -1,5 +1,7 @@
 # Historical experiment — 04_source_anchored_animation
 
-**Archived implementation.** Early source-anchored pilot, superseded as the production blink reference by experiment 10. Its closed-eye donor and approved talking artifact are still required by experiment 10; retain assets/.
+Archived. Use [experiment 10](../10_neutral_blink_refined/README.md) for Neutral animation.
 
-For current work start at [README](../../README.md). Original context and limitations are in [HISTORY](../../HISTORY.md). The script and essential assets remain at their original paths for reproduction and dependencies. They are not part of the default production setup.
+Retain `assets/eyes_closed_donor.png` and `assets/approved_talking.png`: experiment 10 loads them. The talking PNG is a finished frame; the eye PNG supplies donor features.
+
+Experiment details are in [HISTORY](../../HISTORY.md).

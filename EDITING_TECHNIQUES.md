@@ -6,11 +6,11 @@ Use this with the [production workflow](README.md). Diagnose the actual pixels b
 
 ### Define the expression and state
 
-Generate expressions that are immediately recognizable and somewhat exaggerated at normal display size. Define the emotion and the required eye/mouth state separately.
+Generate expressions with **anime-style exaggeration**, immediately recognizable at normal display size. Use pronounced, coordinated changes to brow angles, eye shapes, and mouth shapes. A slight smile, tiny brow adjustment, or barely changed neutral face does not meet the expression brief. Preserve the character's rendering style and identity while exaggerating the acting. Define the emotion and the required eye/mouth state separately.
 
 | Feature | Required appearance |
 |---|---|
-| Expression | Clearly readable emotion through coordinated brows, eyes, and mouth. Prefer deliberate, somewhat exaggerated expression over subtle ambiguity. |
+| Expression | Unmistakable emotion with anime-style exaggeration through coordinated brows, eyes, and mouth. Happy should read as delighted, Shocked as visibly startled, Angry as clearly angry. Neutral remains neutral. |
 | Open eyes | Visibly open; an expression-specific squint is acceptable only if it reads clearly as open. |
 | Closed eyes | Fully closed lids, with no visible iris or eye opening. Preserve the expression through lid shape and brows. |
 | Resting / `closed_mouth` | Closed or barely parted. Shocked may have a tiny opening, but must remain clearly distinct from its talking state. |
@@ -18,21 +18,32 @@ Generate expressions that are immediately recognizable and somewhat exaggerated 
 
 The resting mouth is used in `idle` and `blink`; the talking mouth is used in `talking` and `blink_talking`. Filenames such as `closed_mouth` describe the intended state; they do not prove that the image satisfies it.
 
+Exaggeration must respect the requested animation state: do not open a resting mouth widely to make Shocked readable. Express strong surprise through raised brows and widened eyes while keeping the resting lips closed or barely parted. A closed-mouth Happy should still have an unmistakable smile.
+
 ### Generate the expression, then its animation variants
 
-Edit the actual master pose to obtain the expression donor. After the static expression is finished, use it as the reference for blink and talking donors. Specify the visible feature changes explicitly; "happy," "shocked," or "talking" alone is insufficient. Preserve character identity, style, pose, framing, and unaffected features.
+Edit the actual master pose to obtain the expression donor. After the static expression is finished, use it as the reference for blink and talking donors. Specify the visible feature changes and anime-style expressive intensity explicitly; "happy," "shocked," or "talking" alone is insufficient. Preserve identity and rendering style in the features to be copied, with geometry suitable for alignment.
+
+Build each expression's animation states from its finished static expression. Preserve its expressive brows, shading, and unaffected features when replacing eyes or mouth; starting every state from Neutral can discard the expression.
+
+Select each donor with an explicit path and record the exact file loaded in the build manifest. Do not resolve a filename by searching multiple directories or silently substitute an older donor.
+
+Only the selected donor region will be transplanted. Changes to clothing, body, background, or other excluded pixels are not grounds to reject an otherwise suitable facial donor or regenerate it. A face crop is optional; do not introduce a cropping/regeneration step merely because unrelated parts of a full-image donor changed. Final composites preserve the master outside the declared edit regions.
 
 Example instructions:
 
-- **Shocked resting:** "Clearly surprised: raised brows, widened eyes, lips closed or only very slightly parted."
-- **Shocked talking:** "Preserve the surprised expression; make the mouth visibly open and clearly distinguishable from the resting mouth."
-- **Happy blink:** "Preserve the smile and happy expression; fully close both eyes with natural curved lids."
+- **Shocked resting:** "Strong anime-style surprise: eyebrows raised high with pronounced arches, eyes dramatically widened, lips closed or only very slightly parted. Make the surprise unmistakable at normal display size. Preserve the character's identity and rendering style."
+- **Shocked talking:** "Preserve the strongly startled brows and widened eyes; make the mouth visibly open and clearly distinguishable from the resting mouth, with an exaggerated surprised speaking shape."
+- **Happy resting:** "Strong anime-style delight: a broad, unmistakable closed-mouth smile with raised corners, lifted cheeks, and joyful eyes. Keep lips together and eyes visibly open. Preserve the character's identity and rendering style."
+- **Happy blink:** "Preserve the broad smile and strongly delighted expression; fully close both eyes into expressive upward-curving lids, with no visible iris or eye opening."
 
 ### Check suitability before compositing
 
-Compare resting/talking and open/closed variants side by side at normal display size. Check that each variant conveys the intended emotion and that the eye and mouth states are unambiguous. Inspect enlarged crops for anatomy, line quality, and unwanted changes.
+Compare the master and expression donor side by side at normal display size: the intended emotion must be immediately apparent without labels or zooming. Reject a donor that remains subtle or essentially unchanged; regenerate with concrete stronger feature changes before transplanting. Do not accept it merely because the prompt requested exaggeration.
 
-Reject ambiguous states, weak expressions, or unintended identity/style changes. Sharpness alone does not make a donor suitable. Regenerate an unsuitable feature before investing in transplantation; reuse existing donors that meet these criteria.
+Compare resting/talking and open/closed variants side by side at normal display size. Check that each variant conveys the intended emotion and that the eye and mouth states are unambiguous. Inspect enlarged crops for anatomy, line quality, and unwanted changes within the intended transplant region.
+
+Reject ambiguous states, weak expressions, or unintended identity/style changes within the features to be copied. Sharpness alone does not make a donor suitable. Regenerate an unsuitable feature before investing in transplantation; reuse existing donors that meet these criteria.
 
 ## Separate the selections
 
@@ -49,7 +60,7 @@ For static-expression transplantation, changing eyebrows, eyes, mouth, and expre
 
 ## Diagnose before editing
 
-Compare the exact source, aligned donor, previous final, and latest final at the same coordinates. Use normal size and enough nearest-neighbor magnification to resolve the marked edge; a mandatory ladder of zoom levels adds no evidence.
+Compare the exact source, aligned donor, previous final, and latest final at the same coordinates. Inspect normal-size readability and use enough nearest-neighbor magnification to resolve the marked edge.
 
 | Visible defect | Locate its first appearance | Corrective operation |
 |---|---|---|
@@ -62,11 +73,13 @@ Compare the exact source, aligned donor, previous final, and latest final at the
 | Jagged line or detached fragment | Source, donor, or compositing stage | Select/reconstruct the exact contour. Skin blending does not repair line geometry. |
 | Correct PNG, wrong GIF | Encoding or wrong artifact | Decode the delivered file; inspect palette effects and confirm its recorded identity. |
 
-Reject donors with major anatomy, expression, or style changes. Crisp donor pixels still need alignment and complete source removal. Minor surrounding differences do not automatically require regeneration.
+Reject donors with unusable anatomy, the wrong expression, or incompatible style within the intended transplant region. Deliberate expression exaggeration is expected. Crisp donor pixels still need alignment and complete source removal. Differences outside the region to be copied do not require regeneration.
 
 ## Compose in explicit stages
 
 The working utilities are in [artwork_tools.py](experiments/artwork_tools.py); expression geometry and operation order remain in each builder.
+
+Demonstrate one clean feature transplant through the following stages before expanding to the full state set. Save actual intermediate images for the operations used; a final source/donor/result comparison alone does not show where a defect entered the composition.
 
 1. Align each donor feature using shared landmarks. Closed lids have no iris center; use corners and stable surrounding anchors.
 2. Select source foreground separately. Preserve its coverage for restoration after editing the underlying area.
@@ -93,7 +106,7 @@ def transplant_eye(source, donor, clean_skin, removal, insertion, foreground, bo
     return final, allowed, effect
 ```
 
-This supplies operations, not an automatic eye detector. The caller chooses clean repair pixels and selections based on the actual images. `align_feature` moves a donor and its selection together; `match_skin` estimates a bounded median RGB offset from explicit skin samples and applies it only to selected skin. `compose_feature` also accepts an ordered `cleanup=[(repair_image, coverage), ...]` before foreground restoration.
+Choose clean repair pixels and selections from the actual images. `align_feature` moves a donor and its selection together; `match_skin` estimates a bounded median RGB offset from explicit skin samples and applies it only to selected skin. `compose_feature` also accepts an ordered `cleanup=[(repair_image, coverage), ...]` before foreground restoration.
 
 The shared animation builder supports optional `eye_layers` / `mouth_layers` dictionaries with those same arguments and an optional affine `alignment`. `insertion` is required; `donor` defaults to the existing corrected donor. Legacy pipelines retain their original arithmetic until deliberately migrated. Overlapping eye/mouth regions require an explicit custom operation order.
 
@@ -101,19 +114,7 @@ The shared animation builder supports optional `eye_layers` / `mouth_layers` dic
 
 [The Angry compositor](experiments/14_angry_animation/angry_visual_blink.py) uses a source-matched crop, separate eye-local skin replacement, donor lid strokes, and source brow/hair restoration last. Its builder retains the correct idle/speaking mouth for each blink state.
 
-Run its builder to create `output/angry_layer_stages.png`, fixed-coordinate source/donor/result reviews, four PNG states, GIFs, and a final manifest. Learn the separation of layers; its polygon coordinates and color thresholds are specific to Angry. This cleanup preserves the selected algorithm's pixels.
-
-## Worked failure: document-reading
-
-[Commit 849737b](HISTORY.md#document-reading-failure--849737b) replaced the open-eye donors, but retained visible composite defects. It remains **NOT APPROVED**.
-
-At Neutral coordinate `(544, 150)`, the source is dark `(124, 86, 75)`, the aligned closed-eye donor supplies skin `(243, 207, 193)`, and the final remains the original dark pixel. Both the replacement and foreground masks are zero there. A later lower-eye, skin-filtered correction cannot reach that upper-eye remnant.
-
-![Original, aligned donor, and encoded result](experiments/13_document_reading_pose/failure_example.png)
-
-The announced full-replacement correction changed no weights for the current masks. Saved repaired GIFs v1–v5 were identical; v6 changed one pixel in Happy's open-eye frames and left blink frames unchanged. This is a diagnosis/selection failure, not evidence that clean donors cannot be transplanted.
-
-The corrective reasoning is to identify that incomplete removal region, establish clean background coverage, then inspect each subsequent stage for reintroduced defects. The failure example demonstrates what went wrong; it is not a completed repair recipe.
+Run its builder to create `output/angry_layer_stages.png`, fixed-coordinate source/donor/result reviews, four PNG states, GIFs, and a final manifest. Use its layer structure as a reference; trace polygon coordinates and select color thresholds for the actual target image.
 
 ## Prove each correction
 

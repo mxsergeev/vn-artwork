@@ -117,9 +117,17 @@ A later audit compared source, aligned donors, intermediate operations, PNGs, an
 - The final Happy one-pixel code edit and v6 GIF were not exported into the standard PNGs. Separate delivery paths made the current state harder to establish.
 - The agent repeatedly claimed improvement without demonstrating it in the actual marked output region.
 
-These facts establish ineffective operations and an unreliable visual feedback loop; counts are not quality scores. The donors contain useful clean features. Future work must locate each defect's originating stage, completely remove the unwanted source content, and prove the correction survives downstream layers and encoding. See the [current worked example](EDITING_TECHNIQUES.md#worked-failure-document-reading).
+These facts establish ineffective operations and an unreliable visual feedback loop; counts are not quality scores. At the cited Neutral coordinate, the replacement and foreground masks were both zero. A later correction limited to lower-eye skin could not reach the upper-eye remnant. This was a diagnosis/selection failure, not evidence that clean donors cannot be transplanted.
 
-The duplicate versioned GIFs remain local under the experiment's ignored output directory. Git retains the original WIP checkpoint; one compact diagnostic is kept as `experiments/13_document_reading_pose/failure_example.png`.
+The old diagnostic image and implementation are retained in [the pre-cleanup Git revision](https://github.com/mxsergeev/vn-artwork/tree/ff396bfa1ad470a3f93085bed1e8131decf6bc1a/experiments/13_document_reading_pose). They are historical evidence, not implementation guidance.
+
+## Reading-pose restart — October 18, 2026
+
+Experiments 18 (`18_reading_pose_redo`) and 19 (`19_document_reading_rebuild`) also failed to establish an acceptable expression/animation set. The latter generated restrained Happy donors, blended features through shared blurred polygons without separate removal/repair/foreground stages, and built each state from Neutral. Its donor loader preferred six existing full-image files over newly generated variants with identical names; the manifest omitted those actual full-image inputs. Saved review sheets showed remnants, joins, and inconsistent expressions. This describes the inspected work in progress, not a completed repair.
+
+At the user's request, all reading-pose donors and failed implementations were retired from the working tree. Experiments 13, 18, and 19, their local outputs, rejected published reading-pose assets, and loose review images were copied to a verified external archive before removal. Original tracked work remains recoverable through Git. The two untracked retries and their generated donors were preserved in the external archive as well.
+
+Only `static/poses/document_reading/neutral.png` remains as an artwork input for the restart. Its [input record](static/poses/document_reading/README.md) is authoritative. No donor, completed Happy/Shocked expression, or animation is carried forward. The shared README and editing guide describe the method; old reading-pose scripts, masks, offsets, and failed outputs are not references for new work.
 
 ## Archived mask-iteration measurements
 

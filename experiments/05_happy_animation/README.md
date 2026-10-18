@@ -1,18 +1,7 @@
-> **Historical prototype.** The mouth method was superseded by 09 and the eye treatment by 11. Its `assets/ai_open_eyes_candidate.png` remains an input to both later builders. Keep the assets at this path. Start new work at the [current workflow](../../README.md); the notes below describe the old prototype.
+# Historical Happy prototype — experiment 05
 
-# Happy animation — experiment 05
+Archived. Use [experiment 09](../09_happy_imagen_mouth/README.md) for the mouth method and [experiment 11](../11_happy_eye_refined/README.md) for Happy animation.
 
-**Status:** promising prototype, not approved as a final sprite.
+Retain `assets/ai_open_eyes_candidate.png`: experiments 09 and 11 load it as their open-eye donor.
 
-Run `python experiments/05_happy_animation/build.py` (requires root `requirements.txt`). Uses the existing aligned `static/sprites/02_happy.png` (original closed eyes and wide smile) and `01_neutral_worried.png` (open-eye donor); both are the **same character** from the proven expression set.
-
-- `output/01_happy_normal.png` — transplanted open eyes, original wide smile
-- `static/sprites/02_happy.png` — unchanged original, used as blink frame (not duplicated here)
-- `output/03_happy_talking.png` — open eyes, smaller speaking mouth
-- `output/04_happy_blink_talking.png` — closed eyes, smaller speaking mouth
-- `output/combined_preview.gif`, `blink_preview.gif`, `talk_preview.gif` — animation tests
-- `output/four_states_face_comparison.png`, `eyes_8x_inspection.png`, `mouth_8x_inspection.png`, `feature_masks.png`, `QA.json` — inspection and locality/alpha checks
-
-**Method:** hand-tuned per-eye masks excluding hair, local RGB skin adjustment, and a small mouth produced by shrinking Happy's *own* mouth vertically around its original center over inpainted skin. Pixel checks verify unchanged alpha and no changes outside the masks; these cannot establish artistic quality. Open eyes may look too neutral; eyelashes, mask edges, and inpainted skin still need visual/manual review.
-
-**New AI-generated artwork:** `assets/ai_open_eyes_candidate.png` is from a later successful **direct source-image edit**. It matches the character/style but differs from the original in eyes, color and other pixels. **Not used by build.py or validated as a donor**. Retain as one reference for a future donor-transplant iteration; unrelated earlier generations are excluded.
+Prototype commands, methods, and limitations are in [HISTORY](../../HISTORY.md#d-happy-blinktalk-prototype--experiment-05-oct-16-2026).
