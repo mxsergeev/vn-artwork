@@ -126,6 +126,21 @@ for name in ("happy","shocked"):
     overlay[:,:,:3]=np.clip(master[:,:,:3].astype(float)*.5 + aligned[:,:,:3].astype(float)*.5,0,255).astype("uint8")
     all_panels.append(("Overlay "+name,shown(overlay)))
     all_panels.extend([("Final "+name,shown(final)),("Mask "+name,shown(mask))])
+
+    # A fixed-coordinate diagnostic of the actual donor, selection and delivered sprite.
+    eye_crop=(527,134,646,194)
+    lip_crop=(544,190,618,232)
+    panels = [("source",master),("registered donor",aligned),("selected",mask),("final",final)]
+    for part,rect in [("eyes",eye_crop),("mouth",lip_crop)]:
+        zz=6
+        panel_w=(rect[2]-rect[0])*zz
+        panel_h=(rect[3]-rect[1])*zz
+        review=Image.new("RGB",(panel_w*4,panel_h+22),"#eeeeee")
+        writer=ImageDraw.Draw(review)
+        for j,(label,art) in enumerate(panels):
+            review.paste(shown(art,crop=rect,magnification=zz),(panel_w*j,22))
+            writer.text((j*panel_w+7,5),label,fill="black")
+        review.save(OUT/(name+"_"+part+"_review.png"))
     Image.fromarray(aligned).crop(box).save(OUT/(name+"_aligned_face.png"))
     # Diagnostic anchor/match marks on the source and aligned donor, sample for visual checking.
     marks=shown(master,crop=head,magnification=2)
