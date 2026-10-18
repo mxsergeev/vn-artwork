@@ -32,6 +32,8 @@ Do not generate animation donors from an unfinished transplant. If the static ex
 
 Use readable anime-style expressions at the intended display size. A recognizable happy smile is sufficient; maximum intensity and dramatic changes to every feature are unnecessary. Stop increasing intensity once the intended emotion reads clearly.
 
+This sets a readability target, not a preference for subdued expressions. Do not add "gentle", "subtle", or "restrained" unless the requested emotion calls for that intensity. A resting mouth describes its opening, not the strength of the expression.
+
 | State | Visible requirement |
 |---|---|
 | Open eyes | Clearly open; an expression-specific squint may be used if it remains unambiguous |
@@ -101,6 +103,7 @@ Use nearest-neighbour enlargement for pixel diagnosis. Use appropriate resamplin
 |---|---|---|
 | Static expression changes brows, eyes, mouth and supporting shading together; overall face geometry aligns | Broad coherent facial patch | Registration overlay; boundary on compatible skin; source foreground retained where needed |
 | Blink/talk donor matches the finished expression's geometry | Separate eye/mouth replacement | Full old-feature footprint covered; desired new contour retained; unchanged surroundings |
+| Static donor has usable features, but its hairline or jaw cannot join the master as one patch | Separately register and replace expressive regions, including brows and supporting shading where needed | Each region joins compatible source skin; the complete expression remains coherent |
 | Feature displaced but shape and perspective compatible | Translate; add uniform scale/rotation only as measured | Marked correspondences, aligned overlay; expression proportions preserved |
 | Shape differs locally despite suitable pose | Limited local reshape or contour reconstruction | Justified local displacement; continuous line thickness and anatomy |
 | Head angle, jaw/nose relationship or line style cannot be reconciled without distorting identity | Select/regenerate a compatible donor | Name the mismatch within the copied region |
@@ -111,11 +114,35 @@ Use nearest-neighbour enlargement for pixel diagnosis. Use appropriate resamplin
 
 Mark corresponding points on both native-scale images. Use stable head landmarks for a broad patch: nose bridge/tip, chin, ear attachment, and eye corners where identifiable. Do not force expressive eyebrows, eye aperture, or smile width back into the Neutral shape. For closed lids use corners and stable surroundings, never a nonexistent iris centre. Place a mouth relative to the nose, philtrum, and chin; its opening and width may intentionally change.
 
+Identify each point independently on each image before fitting. Give it an anatomical name, such as "viewer-left outer eye corner" or "bottom of chin contour". At enlargement, its marker must touch that actual feature in both images. A marker on nearby skin, hair, or background is not a correspondence. Do not start from master coordinates and change them by a few pixels without locating the donor feature. If the feature is hidden or ambiguous, omit it and use another identifiable landmark.
+
 1. Fit a translation if all anchors have approximately the same displacement.
 2. Use uniform scale/rotation if anchor distances/angles establish a size or roll difference.
-3. Check a landmark not used to fit the transform. An exact fit to two points alone does not establish a correct face.
+3. Reserve identifiable landmarks before fitting and check them afterward. A chin included in the fit is not an independent chin check. A small residual measures agreement between the supplied coordinates; it does not establish that those coordinates identify corresponding anatomy.
 4. Display the aligned donor and source at 50% opacity, plus separate edge/anchor overlays. Double contours in intended stable boundaries mean registration is unfinished. Do not blend the final patch yet.
 5. If one transform cannot align the relevant anatomy, use a local feature transform or reject the donor. Do not hide the mismatch by narrowing the insertion mask.
+
+For a measured least-squares similarity fit, keep fitting and checking arrays separate:
+
+```python
+def fit_similarity(fit_donor, fit_source, check_donor, check_source):
+    D, S, C, T = [np.asarray(p, dtype=np.float64)
+                  for p in (fit_donor, fit_source, check_donor, check_source)]
+    assert D.shape == S.shape and D.ndim == 2 and D.shape[1] == 2
+    assert C.shape == T.shape and C.ndim == 2 and C.shape[1] == 2
+    assert len(D) >= 2 and len(C) >= 1
+    x, y = D.T
+    A = np.empty((2*len(D), 4), dtype=np.float64)
+    A[0::2] = np.column_stack((x, -y, np.ones(len(D)), np.zeros(len(D))))
+    A[1::2] = np.column_stack((y, x, np.zeros(len(D)), np.ones(len(D))))
+    assert np.linalg.matrix_rank(A) == 4
+    a, b, tx, ty = np.linalg.lstsq(A, S.ravel(), rcond=None)[0]
+    matrix = np.array([[a, -b, tx], [b, a, ty]], dtype=np.float32)
+    checks_mapped = C @ matrix[:,:2].T + matrix[:,2]
+    return matrix, checks_mapped, np.linalg.norm(checks_mapped - T, axis=1)
+```
+
+Supply independently located points in the same anatomical order. Display the check markers and the actual nose, jaw and hair boundaries after transformation. Choose acceptable error from the native feature size and visible contour agreement; no residual threshold makes a visually wrong mapping acceptable.
 
 A concrete two-point mapping using the registered Angry donor crop: local lid points `(15,35)` and `(47,38)` map to target `(475,147)` and `(507,150)`. These numbers describe that crop, not a different pose.
 
@@ -154,6 +181,22 @@ face_points = np.array([(144,147),(184,139),(233,143),(260,158),(272,182),
 
 [The complete runnable example](experiments/workflow_examples.py) builds the selection, transforms it and the portrait, samples corresponding neutral skin, matches the palette, and compares its output with the historical builder on the current runtime. The recorded matrix is specific to that sheet. Measure a new mapping for new donors. Historical PNGs can differ slightly with numeric library versions; the example reports that difference separately and does not overwrite them.
 
+The historical compositor explicitly fades the face patch before the original chin/neck. Its success does not establish that any polygon surrounding a face is safe. Preserve the master's jaw, chin, neck and outer hair contours when those structures are not being edited. Matching source alpha alone cannot protect internal contours: opaque donor skin can overwrite an opaque source jaw or strand without changing alpha.
+
+### Choose a boundary that can actually join
+
+1. On the aligned donor and master, locate the complete old features to replace and the desired new ones. Include the shading that makes the new expression coherent.
+2. Trace a boundary through compatible skin on both images. Inspect its entire perimeter, including forehead, temples, lower cheeks and the area above the chin. Keep unchanged jaw/neck contours outside the transition.
+3. Where source hair crosses the edit, exclude unwanted donor hair and retain or restore the complete intended source strand. Restoring source hair does not remove a second donor strand beside it.
+4. If a broad patch has no safe perimeter, use separate expressive regions with their own mappings and background repair. This changes the compositing method; it is not permission to clip a displaced feature with a smaller mask. Regenerate only when the required copied features themselves cannot be reconciled.
+
+| Successful operation | Why it works | Incorrect substitution |
+|---|---|---|
+| Historical static face patch | Registered facial content; transition fades before original chin/neck | Trace the full apparent face and paste through a mismatched jaw or hairline |
+| Angry blink repair | Replace old-eye footprint, insert lids, restore bounded source brow/hair edges | Copy isolated dark pixels over a displaced donor face |
+
+Inspect the selected donor beside the final at identical coordinates. A smooth donor contour that becomes notched, squared off, doubled or fragmented in the final is a compositing defect. Locate the first stage that introduces it before changing the donor.
+
 ## 4. Separate removal, insertion, and foreground
 
 ![Selections with different jobs](docs/artwork_examples/selection_roles.png)
@@ -168,6 +211,8 @@ Green covers the old open-eye footprint to replace. Orange covers donor lids. Bl
 | Cleanup | Target | Specific remaining skin, join, or contour repair |
 
 Trace outlines from enlarged images and display selections over the native image. Bounding rectangles locate a region; their contents are not automatically safe to paste. Trace donor insertion after registration. Include intended antialiasing and lash tips. Constrain colour thresholds inside traced anatomical regions: dark pixels may be lashes, brows, hair, or mouth.
+
+Foreground depends on the operation. During a blink, the established expression's brows remain source foreground. During a static expression change, brows that carry the new emotion belong to the donor; restoring the neutral brows would undo that change. Restore only artwork explicitly intended to survive.
 
 Concrete left-eye selections used by the layered Angry example:
 
@@ -244,6 +289,8 @@ save_stage_review("experiments/.workflow_checks/eye.png", stages, (468,125,535,1
 ```
 
 This code reproduces the established left-eye operations with the toolkit API and real source geometry: matched donor skin supplies the broad replacement; the original donor lid supplies the contour. It is not a new-pose template. Sampling and foreground boundaries need inspection for the target image. Save masks and overlays; never infer anatomy solely from colour thresholds.
+
+The foreground code grows a traced dark core by one native pixel and bounds that growth near the trace to recover source edge pixels. Copying only `traced & dark` can omit lighter edge pixels and split a strand into fragments. Inspect the restored strand from its unchanged root through its tip, with the donor visible underneath. Trace the complete strand or adjust bounded coverage where needed; do not dilate into an obsolete lash, neutral brow, or adjacent skin merely to make the mask larger. This operation preserves a compatible crossing; it cannot correct a displaced underlying face.
 
 ### Feathering has a limited job
 
@@ -343,6 +390,8 @@ Define `face_box` for the pose. Include decoded review panels before recording t
 
 Review selected artifacts at native face size, intended display size, and enlarged individual regions. Full-body previews can hide small defects. Wide montages can be downscaled: open eyes and mouth as separate crops too.
 
+Include the complete patch perimeter in review crops, especially hair crossings and chin/neck joins. Eye and mouth crops alone cannot establish a clean static transplant. Compare master, aligned donor, insertion, and restored final at the same coordinates; a pass must describe the final pixels, not infer quality from the chosen algorithm or its fitting error.
+
 For each criterion record **pass**, **fail**, or **uncertain**, a concrete observation, and recorded image filenames showing what was inspected. Recognizable emotion is only one criterion. These defects reject an image even when its emotion reads clearly:
 
 | Criterion key | Pass evidence | Reject / uncertain condition |
@@ -355,6 +404,8 @@ For each criterion record **pass**, **fail**, or **uncertain**, a concrete obser
 | `animation` | All decoded frames match intended states; only intended features move; matte/palette stable | Face/hair jumps, skin flashes, colour changes, incorrect sequence |
 
 If a region cannot be assessed confidently, record `uncertain` and obtain a clearer crop or further review. Do not turn uncertainty into a pass to finish. An inspection note, changed-pixel count, successful decoding, or integrity pass does not certify visual quality.
+
+Before declaring a sprite/transplant complete or publishing it, follow the independent review gate in [AGENTS.md](AGENTS.md). It specifies the required reviewer, evidence, verdicts, and repair loop.
 
 ## 9. Record review and publish
 
