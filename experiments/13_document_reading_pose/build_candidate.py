@@ -58,15 +58,74 @@ def shown(im, crop=box, magnification=3):
     return bg.convert("RGB").resize((part.width*magnification,part.height*magnification),Image.Resampling.NEAREST)
 
 
+
+def polygon_mask(points):
+    out = np.zeros(master.shape[:2], np.uint8)
+    cv2.fillPoly(out,[np.array(points,np.int32)],255)
+    return out
+
+
+# Regions independently measured against the native master; not copied from other poses.
+LEFT_EYE=[(533,149),(541,147),(551,149),(563,150),(576,148),(588,147),
+          (593,156),(592,170),(587,182),(577,186),(558,187),(543,184),
+          (535,175),(532,159)]
+RIGHT_EYE=[(592,153),(599,148),(609,147),(624,144),(635,145),(640,155),
+           (639,167),(632,180),(620,185),(604,184),(595,178),(590,168)]
+MOUTH=[(551,201),(558,197),(569,196),(584,196),(602,199),(608,204),
+       (609,215),(602,222),(586,226),(568,225),(556,220),(552,213)]
+
+def skin_pixels(rgb):
+    arr=rgb.astype(np.int16)
+    r,g,b=arr[:,:,0],arr[:,:,1],arr[:,:,2]
+    return (r>145)&(g>110)&(b>89)&(r-g>10)&(g-b>3)&(r-g<90)
+
+def transplant(source, aligned, name):
+    result=source.copy()
+    regions = [("left_eye",LEFT_EYE),("right_eye",RIGHT_EYE),("mouth",MOUTH)]
+    complete=np.zeros(source.shape[:2],np.uint8)
+    stage_names=[]
+    for region_name, points in regions:
+        mask=polygon_mask(points)
+        complete=cv2.bitwise_or(complete,mask)
+        clean=(mask>0)&skin_pixels(source[:,:,:3])&skin_pixels(aligned[:,:,:3])
+        # Choose clean skin from outer portion; exclude eyelash and mouth strokes.
+        clean &= (np.min(source[:,:,:3],axis=2)>95)&(np.min(aligned[:,:,:3],axis=2)>95)
+        if clean.sum()>12:
+            delta=np.median(source[:,:,:3][clean].astype(float)-aligned[:,:,:3][clean].astype(float),axis=0)
+        else: delta=np.zeros(3)
+        delta=np.clip(delta,-9,9)
+        print(name,region_name,"skin pixel count",int(clean.sum()),"RGB bias",delta.tolist())
+        corrected=aligned[:,:,:3].astype(np.float32).copy()
+        donor_skin=skin_pixels(aligned[:,:,:3])
+        corrected[donor_skin]=np.clip(corrected[donor_skin]+delta,0,255)
+        # Full coverage through the old/new features; feather only along clean-skin boundary.
+        # Distance transform works within the polygon without writing outside it.
+        distance=cv2.distanceTransform(mask,cv2.DIST_L2,3)
+        a=np.clip(distance/3.0,0,1)[:,:,None]
+        result[:,:,:3]=np.rint(result[:,:,:3].astype(float)*(1-a)+corrected*a).astype(np.uint8)
+        stage_names.append((region_name,result.copy()))
+    assert np.array_equal(result[:,:,3],source[:,:,3])
+    changed=np.any(result[:,:,:3]!=source[:,:,:3],axis=2)
+    assert not (changed & (complete==0)).any()
+    Image.fromarray(result).save(OUT/(name+".png"))
+    # Mask preview shows exactly the intended replacement footprint.
+    highlight=source.copy()
+    hint=complete>0
+    highlight[:,:,:3][hint]=(source[:,:,:3][hint].astype(float)*0.45 + np.array([40,245,60])*.55).astype("uint8")
+    Image.fromarray(highlight).crop(box).save(OUT/(name+"_mask_face.png"))
+    return result,highlight,stage_names
+
 all_panels=[("Neutral",shown(master))]
 for name in ("happy","shocked"):
     donor=load(HERE/"assets"/(name+"_donor.png"))
     aligned,M,D,S=align_to_master(donor,name)
+    final,mask,stages=transplant(master,aligned,name)
     all_panels.extend([("Original "+name,shown(donor)),("Aligned "+name,shown(aligned))])
     # 50% overlap makes double contours in unchanged anatomy visible.
     overlay=master.copy()
     overlay[:,:,:3]=np.clip(master[:,:,:3].astype(float)*.5 + aligned[:,:,:3].astype(float)*.5,0,255).astype("uint8")
     all_panels.append(("Overlay "+name,shown(overlay)))
+    all_panels.extend([("Final "+name,shown(final)),("Mask "+name,shown(mask))])
     Image.fromarray(aligned).crop(box).save(OUT/(name+"_aligned_face.png"))
     # Diagnostic anchor/match marks on the source and aligned donor, sample for visual checking.
     marks=shown(master,crop=head,magnification=2)
@@ -78,7 +137,8 @@ for name in ("happy","shocked"):
 
 width=max(p.width for _,p in all_panels)
 height=max(p.height for _,p in all_panels)
-board=Image.new("RGB",(width*4,height*2+24),"#eeeeee")
+rows=(len(all_panels)+3)//4
+board=Image.new("RGB",(width*4,(height+12)*rows),"#eeeeee")
 draw=ImageDraw.Draw(board)
 for i,(title,im) in enumerate(all_panels):
     x=(i%4)*width;y=(i//4)*(height+12)
