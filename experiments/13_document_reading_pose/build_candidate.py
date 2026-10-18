@@ -151,8 +151,9 @@ def transplant(source, aligned, name):
         moderate = soft_hair_restore(5, 0.92)
         Image.fromarray(subtle).save(OUT/"shocked_cheek_subtle_feather.png")
         Image.fromarray(moderate).save(OUT/"shocked_cheek_moderate_feather.png")
-        # Default to the smaller correction until visual review establishes better.
-        result = subtle
+        # The 5x5 / 0.92 variant gives a smoother cheek edge at native size
+        # without altering the face/eye geometry. Keep both previews for review.
+        result = moderate
 
         cheek_box = (588, 146, 650, 214)
         variants = [
