@@ -25,12 +25,15 @@ python experiments/11_happy_eye_refined/build.py
 python experiments/12_shocked_animation/build.py
 python experiments/build_remaining_animations.py
 python experiments/build_animation_previews.py
+python experiments/13_document_reading_pose/build.py
 # Experiment output/ directories are temporary and ignored by Git.
 ```
 
 Reviewed, published states are stored under `static/animation/{neutral,happy,shocked,pouty,angry,embarrassed,sad,strained_smile}/` as `idle.png`, `blink.png`, `talking.png`, and `blink_talking.png`. Regenerate the published GIFs from these states with `python experiments/build_animation_previews.py`: each expression gets blink, speech, and combined previews at the source sprite's 1086×1448 resolution, plus `static/animation/all_expressions.gif`, a labeled 3×3 face montage that animates all eight expressions together. PNG state files preserve the source alpha. GIF previews use a fixed opaque light-gray background because GIF transparency cannot retain the sprites' antialiased alpha.
 
 Sources: `static/sprites/01_neutral_worried.png` through `08_strained_smile.png`, all 1086×1448 RGBA. **Never overwrite these sources.** Reuse an original sprite for any state it already represents: Neutral, Pouty, and Sad `idle.png`; Angry, Embarrassed, and Strained Smile `talking.png`; Shocked `idle.png`; and Happy `blink_talking.png` (closed eyes with the original open smile). Experiments 13–17 document the mouth-state choice and expression-specific masks for the remaining five expressions.
+
+Pose-specific variants live separately. The document-reading pose uses `static/poses/document_reading/neutral.png` as its source and publishes states under `static/animation/document_reading/{neutral,happy,shocked}/`; it does not replace the original pose assets. See [experiment 13](experiments/13_document_reading_pose/README.md).
 
 For each feature, inspect **source sprite, candidate donor, existing result, and reference masks** at native size and at progressively higher magnifications (**5×, 10×, 15×, 20×, or higher as needed**). Determine the exact source features to remove, desired donor features to retain, and hair strands crossing the edit.
 
