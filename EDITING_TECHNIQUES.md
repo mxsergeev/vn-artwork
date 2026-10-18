@@ -6,11 +6,11 @@ Use this with the [production workflow](README.md). Diagnose the actual pixels b
 
 ### Define the expression and state
 
-Generate expressions with **anime-style exaggeration**, immediately recognizable at normal display size. Use pronounced, coordinated changes to brow angles, eye shapes, and mouth shapes. A slight smile, tiny brow adjustment, or barely changed neutral face does not meet the expression brief. Preserve the character's rendering style and identity while exaggerating the acting. Define the emotion and the required eye/mouth state separately.
+Generate clearly readable emotions with **anime-style expressiveness** at the intended display size. Coordinate brows, eyes, and mouth as needed for the requested emotion while preserving character identity and rendering style. A recognizable happy smile is sufficient for Happy; maximum intensity or dramatic changes to every feature are not required. Define the emotion and the required eye/mouth state separately.
 
 | Feature | Required appearance |
 |---|---|
-| Expression | Unmistakable emotion with anime-style exaggeration through coordinated brows, eyes, and mouth. Happy should read as delighted, Shocked as visibly startled, Angry as clearly angry. Neutral remains neutral. |
+| Expression | Clearly recognizable requested emotion: Happy looks happy, Shocked looks surprised, Angry looks angry, and Neutral remains neutral. Stop increasing intensity once the expression reads clearly at the intended display size. |
 | Open eyes | Visibly open; an expression-specific squint is acceptable only if it reads clearly as open. |
 | Closed eyes | Fully closed lids, with no visible iris or eye opening. Preserve the expression through lid shape and brows. |
 | Resting / `closed_mouth` | Closed or barely parted. Shocked may have a tiny opening, but must remain clearly distinct from its talking state. |
@@ -18,32 +18,34 @@ Generate expressions with **anime-style exaggeration**, immediately recognizable
 
 The resting mouth is used in `idle` and `blink`; the talking mouth is used in `talking` and `blink_talking`. Filenames such as `closed_mouth` describe the intended state; they do not prove that the image satisfies it.
 
-Exaggeration must respect the requested animation state: do not open a resting mouth widely to make Shocked readable. Express strong surprise through raised brows and widened eyes while keeping the resting lips closed or barely parted. A closed-mouth Happy should still have an unmistakable smile.
+Keep expressiveness consistent with the requested animation state: use brows and widened eyes to convey Shocked while keeping resting lips closed or barely parted. Keep Happy recognizably happy with both resting and talking mouths.
 
 ### Generate the expression, then its animation variants
 
-Edit the actual master pose to obtain the expression donor. After the static expression is finished, use it as the reference for blink and talking donors. Specify the visible feature changes and anime-style expressive intensity explicitly; "happy," "shocked," or "talking" alone is insufficient. Preserve identity and rendering style in the features to be copied, with geometry suitable for alignment.
+Edit the actual master pose to obtain the expression donor. After the static expression is finished, use it as the reference for blink and talking donors. Specify the desired visible features and eye/mouth state. Preserve identity and rendering style in the features to be copied, with geometry suitable for alignment.
 
 Build each expression's animation states from its finished static expression. Preserve its expressive brows, shading, and unaffected features when replacing eyes or mouth; starting every state from Neutral can discard the expression.
 
 Select each donor with an explicit path and record the exact file loaded in the build manifest. Do not resolve a filename by searching multiple directories or silently substitute an older donor.
 
-Only the selected donor region will be transplanted. Changes to clothing, body, background, or other excluded pixels are not grounds to reject an otherwise suitable facial donor or regenerate it. A face crop is optional; do not introduce a cropping/regeneration step merely because unrelated parts of a full-image donor changed. Final composites preserve the master outside the declared edit regions.
+Use full-canvas donors with the master's framing by default. When one supplies suitable features, crop its existing pixels for transplantation. Changes to clothing, body, background, or other excluded pixels are not grounds to reject it. Final composites preserve the master outside the declared edit regions.
+
+Generate an enlarged face donor only to address a specific visible deficiency in the available donors. Cropping existing pixels preserves their stroke widths; generating a close-up can redraw linework, shading, texture, and proportions at a different scale. Record the source crop bounds and establish the generated crop's mapping to the master. Before transplantation, map it to the master's native scale and inspect geometry, stroke weight, shading, and sharpness against the source. Do not assume that resizing alone restores compatibility.
 
 Example instructions:
 
-- **Shocked resting:** "Strong anime-style surprise: eyebrows raised high with pronounced arches, eyes dramatically widened, lips closed or only very slightly parted. Make the surprise unmistakable at normal display size. Preserve the character's identity and rendering style."
-- **Shocked talking:** "Preserve the strongly startled brows and widened eyes; make the mouth visibly open and clearly distinguishable from the resting mouth, with an exaggerated surprised speaking shape."
-- **Happy resting:** "Strong anime-style delight: a broad, unmistakable closed-mouth smile with raised corners, lifted cheeks, and joyful eyes. Keep lips together and eyes visibly open. Preserve the character's identity and rendering style."
-- **Happy blink:** "Preserve the broad smile and strongly delighted expression; fully close both eyes into expressive upward-curving lids, with no visible iris or eye opening."
+- **Shocked resting:** "Clearly surprised anime expression: raised brows, widened eyes, and lips closed or only very slightly parted. Preserve the character's identity and rendering style."
+- **Shocked talking:** "Preserve the surprised brows and eyes; make the mouth visibly open and clearly distinguishable from the resting mouth."
+- **Happy resting:** "Clearly happy anime expression: a readable closed-mouth smile with raised corners and cheerful, visibly open eyes. Preserve the character's identity and rendering style."
+- **Happy blink:** "Preserve the happy smile and brows; fully close both eyes with natural expressive lids, with no visible iris or eye opening."
 
 ### Check suitability before compositing
 
-Compare the master and expression donor side by side at normal display size: the intended emotion must be immediately apparent without labels or zooming. Reject a donor that remains subtle or essentially unchanged; regenerate with concrete stronger feature changes before transplanting. Do not accept it merely because the prompt requested exaggeration.
+Compare the master and expression donor side by side at the intended display size. If the requested emotion and eye/mouth state read clearly and the features are suitable for transplantation, select the donor and proceed. Regenerate only for a specific visible deficiency, such as an ambiguous emotion, wrong state, damaged contour, or incompatible anatomy/style. Name the deficiency and target it in the next prompt; a vague desire for a stronger expression is insufficient.
 
 Compare resting/talking and open/closed variants side by side at normal display size. Check that each variant conveys the intended emotion and that the eye and mouth states are unambiguous. Inspect enlarged crops for anatomy, line quality, and unwanted changes within the intended transplant region.
 
-Reject ambiguous states, weak expressions, or unintended identity/style changes within the features to be copied. Sharpness alone does not make a donor suitable. Regenerate an unsuitable feature before investing in transplantation; reuse existing donors that meet these criteria.
+Reject ambiguous states, unreadable emotions, or unintended identity/style changes within the features to be copied. Sharpness alone does not make a donor suitable. Reuse existing donors that meet these criteria.
 
 ## Separate the selections
 
@@ -73,7 +75,7 @@ Compare the exact source, aligned donor, previous final, and latest final at the
 | Jagged line or detached fragment | Source, donor, or compositing stage | Select/reconstruct the exact contour. Skin blending does not repair line geometry. |
 | Correct PNG, wrong GIF | Encoding or wrong artifact | Decode the delivered file; inspect palette effects and confirm its recorded identity. |
 
-Reject donors with unusable anatomy, the wrong expression, or incompatible style within the intended transplant region. Deliberate expression exaggeration is expected. Crisp donor pixels still need alignment and complete source removal. Differences outside the region to be copied do not require regeneration.
+Reject donors with unusable anatomy, the wrong expression, or incompatible style within the intended transplant region. Crisp donor pixels still need alignment and complete source removal. Differences outside the region to be copied do not require regeneration.
 
 ## Compose in explicit stages
 

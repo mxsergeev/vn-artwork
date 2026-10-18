@@ -15,7 +15,7 @@ Identify the master pose, completed expressions, usable donors, current build, u
 | Stage | Action and completion evidence |
 |---|---|
 | Master pose | Reuse an existing pose, or edit the actual character image to create the requested pose. Review identity, proportions, clothing, framing, and transparency. |
-| Expression donor | Edit that exact master to obtain an immediately recognizable emotion with anime-style exaggeration at normal display size. Reject subtle or barely changed expressions. Check the intended transplant region against the [donor-generation criteria](EDITING_TECHNIQUES.md#generate-and-select-donors). |
+| Expression donor | Edit the exact master to obtain a clearly readable emotion with anime-style expressiveness at the intended display size. Use a suitable full-canvas donor and crop its existing pixels for transplantation. Follow the [donor-generation criteria](EDITING_TECHNIQUES.md#generate-and-select-donors). |
 | Static expression | Align and transplant eyes, brows, mouth, and necessary facial shading onto the master. A broader face selection can be appropriate. Save the finished expression as its own source. |
 | Animation donors | Starting from each finished expression, reuse or generate only missing eye/mouth states. Preserve the emotion while making open/closed states clearly distinguishable, following the donor-generation criteria. The generated image supplies donor features. |
 | Four states | Build `idle`, `blink`, `talking`, and `blink_talking`. Keep the respective idle/speaking mouth when applying a blink. Reuse any state already represented by the source. |
