@@ -126,7 +126,48 @@ def transplant(source, aligned, name):
         # Last stage: retain the master's foreground cheek/hair boundary.
         # Restrict restoration to pixels that could have been transplanted.
         restore = (polygon_mask(SHOCKED_SOURCE_HAIR)>0) & (complete>0)
-        result[restore] = source[restore]
+
+        # Save the working hard-edge candidate before testing a softer transition.
+        hard_path = OUT/"shocked_hard_restore_before_smoothing.png"
+        if not hard_path.exists() and old_candidate.exists():
+            shutil.copyfile(old_candidate, hard_path)
+
+        # Feather ONLY the restoration selection, not the artwork itself.
+        # Keep the source's original cheek/hair colour and contour; do not
+        # smooth eyelashes or blur the image. Never edit outside face selections.
+        def soft_hair_restore(kernel, sigma):
+            blend = cv2.GaussianBlur(
+                restore.astype(np.float32), (kernel, kernel), sigmaX=sigma)
+            blend *= (complete>0).astype(np.float32)
+            result_soft = result.copy()
+            a = blend[..., None]
+            result_soft[:,:,:3] = np.rint(
+                result[:,:,:3].astype(np.float32)*(1-a)
+                + source[:,:,:3].astype(np.float32)*a
+            ).clip(0,255).astype(np.uint8)
+            return result_soft
+
+        subtle = soft_hair_restore(3, 0.62)
+        moderate = soft_hair_restore(5, 0.92)
+        Image.fromarray(subtle).save(OUT/"shocked_cheek_subtle_feather.png")
+        Image.fromarray(moderate).save(OUT/"shocked_cheek_moderate_feather.png")
+        # Default to the smaller correction until visual review establishes better.
+        result = subtle
+
+        cheek_box = (588, 146, 650, 214)
+        variants = [
+            ("hard",load(hard_path) if hard_path.exists() else result),
+            ("subtle",subtle),("moderate",moderate),
+        ]
+        scale = 9
+        panel_width = (cheek_box[2]-cheek_box[0])*scale
+        panel_height = (cheek_box[3]-cheek_box[1])*scale
+        panel = Image.new("RGB",(panel_width*len(variants),panel_height+22),"#eeeeee")
+        labels=ImageDraw.Draw(panel)
+        for idx,(label,pixels) in enumerate(variants):
+            panel.paste(shown(pixels,cheek_box,scale),(idx*panel_width,22))
+            labels.text((idx*panel_width+5,4),label,fill="#111111")
+        panel.save(OUT/"shocked_cheek_feather_comparison.png")
         # Preserve the literal mask for diagnosis, independent of any skin threshold.
         Image.fromarray(np.uint8(restore)*255).save(OUT/"shocked_source_hair_restore_mask.png")
         previous=OUT/"shocked_before_cheek_repair.png"
