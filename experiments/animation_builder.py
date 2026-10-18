@@ -36,6 +36,20 @@ def polygon_mask(size: tuple[int, int], polygons: list[list[list[int]]],
     return np.clip(distance / feather, 0.0, 1.0).astype(np.float32)
 
 
+def assert_mask_fits_donor(mask: np.ndarray, box: list[int], name: str) -> None:
+    """A mask cannot transplant pixels that lie outside the actual donor crop."""
+    x0, y0, x1, y1 = box
+    active = mask > 0
+    within = np.zeros_like(active)
+    within[y0:y1, x0:x1] = True
+    excess = int(np.count_nonzero(active & ~within))
+    if excess:
+        raise AssertionError(
+            f"{name}: {excess} mask pixels are outside the donor crop {box}; "
+            "these pixels cannot contain the requested donor feature"
+        )
+
+
 def skin_color_offset(base: np.ndarray, donor: np.ndarray, mask: np.ndarray,
                       region: tuple[int, int, int, int]) -> tuple[np.ndarray, int]:
     """Estimate a small RGB correction from nearby skin-only pixels."""
@@ -132,7 +146,8 @@ def save_png_atomic(path: Path, frame: np.ndarray) -> None:
 
 def review_images(out: Path, base: np.ndarray, eye_frame: np.ndarray, mouth_frame: np.ndarray,
                   frames: dict[str, np.ndarray], eye_mask: np.ndarray, mouth_mask: np.ndarray,
-                  source_mouth: str) -> None:
+                  source_mouth: str, eye_donor: np.ndarray, mouth_donor: np.ndarray,
+                  eye_box: list[int], mouth_box: list[int]) -> None:
     full_box = (434, 64, 640, 268)
     labels = list(frames)
     canvas = Image.new("RGB", (206 * 3 * len(labels), 204 * 3 + 28), "#f7f7f7")
@@ -175,6 +190,59 @@ def review_images(out: Path, base: np.ndarray, eye_frame: np.ndarray, mouth_fram
     edge[boundary] = [0, 255, 0, 255]
     Image.fromarray(edge, "RGBA").crop((450, 110, 610, 222)).resize((960, 672), Image.Resampling.NEAREST).save(out / "changed_boundary.png", optimize=True)
 
+    # These comparisons are REVIEW MATERIAL, not an automatic quality certificate.
+    # Show the donor, source, composite, and mask side by side at actual 20x zoom.
+    # Mask containment checks cannot detect an eyelash or lid LEFT OUTSIDE the mask.
+    def inspect_feature(label: str, donor: np.ndarray, result: np.ndarray,
+                        mask: np.ndarray, box: tuple[int, int, int, int]) -> None:
+        x0, y0, x1, y1 = box
+        scale = 20
+        views = [
+            ("SOURCE", base),
+            ("ALIGNED DONOR", donor),
+            ("FINAL TRANSPLANT", result),
+        ]
+        width, height = (x1 - x0) * scale, (y1 - y0) * scale
+        board = Image.new("RGB", (width * 5, height + 30), "#f7f7f7")
+        draw = ImageDraw.Draw(board)
+        for col, (title, frame) in enumerate(views):
+            board.paste(face(frame, box, scale), (col * width, 30))
+            draw.text((col * width + 5, 6), title, fill="#111111")
+
+        mask_view = base.copy()
+        active = mask > 0
+        for channel, value in enumerate((25, 240, 65)):
+            mask_view[:, :, channel][active] = np.uint8(
+                mask_view[:, :, channel][active] * 0.55 + value * 0.45
+            )
+        board.paste(face(mask_view, box, scale), (3 * width, 30))
+        draw.text((3 * width + 5, 6), "MASK ON SOURCE", fill="#111111")
+
+        # Red: strong source/donor differences excluded by the mask.
+        # These are CANDIDATES for missed lashes/lids, NOT verified defects:
+        # unedited nearby hair or skin can legitimately differ in the donor.
+        suspicious = (np.max(np.abs(donor[:, :, :3].astype(np.int16) -
+                                     base[:, :, :3].astype(np.int16)), axis=2) >= 45) & ~active
+        attention = base.copy()
+        for channel, value in enumerate((255, 15, 25)):
+            attention[:, :, channel][suspicious] = np.uint8(
+                attention[:, :, channel][suspicious] * 0.35 + value * 0.65
+            )
+        board.paste(face(attention, box, scale), (4 * width, 30))
+        draw.text((4 * width + 5, 6), "UNMASKED DONOR DIFFS: REVIEW", fill="#111111")
+        board.save(out / f"{label}_20x_review.png", optimize=True)
+
+    ex0, ey0, ex1, ey1 = eye_box
+    middle = (ex0 + ex1) // 2
+    for label, crop in (
+        ("left_eye", (max(0, ex0 - 8), max(0, ey0 - 10), middle + 8, min(base.shape[0], ey1 + 10))),
+        ("right_eye", (middle - 8, max(0, ey0 - 10), min(base.shape[1], ex1 + 8), min(base.shape[0], ey1 + 10))),
+    ):
+        inspect_feature(label, eye_donor, eye_frame, eye_mask, crop)
+    mx0, my0, mx1, my1 = mouth_box
+    inspect_feature("mouth", mouth_donor, mouth_frame, mouth_mask,
+                    (max(0, mx0 - 8), max(0, my0 - 8), min(base.shape[1], mx1 + 8), min(base.shape[0], my1 + 8)))
+
 
 def build(config: dict) -> dict:
     here = Path(__file__).resolve().parent / config["experiment"]
@@ -191,6 +259,8 @@ def build(config: dict) -> dict:
     mouth = polygon_mask((w, h), [config["mouth_polygon"]], config.get("mouth_protect", []), config.get("mouth_feather", 1.2))
     if np.any((eye > 0) & (mouth > 0)):
         raise AssertionError("Eye and mouth masks overlap")
+    assert_mask_fits_donor(eye, config["eye_box"], "eyes")
+    assert_mask_fits_donor(mouth, config["mouth_box"], "mouth")
 
     eye_patch = np.asarray(Image.open(here / "assets/eyes_closed_patch.png").convert("RGB"))
     mouth_patch = np.asarray(Image.open(here / "assets/mouth_variant_patch.png").convert("RGB"))
@@ -201,6 +271,10 @@ def build(config: dict) -> dict:
 
     eye_frame = apply_feature(base, eye_donor, eye)
     mouth_frame = apply_feature(base, mouth_donor, mouth)
+    if not np.any(eye_frame[:, :, :3] != base[:, :, :3]):
+        raise AssertionError("Eye mask makes no visible change: wrong donor, crop, or mask")
+    if not np.any(mouth_frame[:, :, :3] != base[:, :, :3]):
+        raise AssertionError("Mouth mask makes no visible change: wrong donor, crop, or mask")
     both_frame = apply_feature(eye_frame, mouth_donor, mouth)
     if config["source_mouth_state"] == "closed":
         frames = {"idle": base.copy(), "blink": eye_frame, "talking": mouth_frame, "blink_talking": both_frame}
@@ -241,7 +315,8 @@ def build(config: dict) -> dict:
     save_gif(out / "combined.gif", [frames[k] for k in ["idle", "talking", "idle", "blink", "idle", "talking", "blink_talking", "talking", "idle"]],
              [450, 220, 300, 130, 430, 220, 130, 240, 1100])
 
-    review_images(out, base, eye_frame, mouth_frame, frames, eye, mouth, config["source_mouth_state"])
+    review_images(out, base, eye_frame, mouth_frame, frames, eye, mouth, config["source_mouth_state"],
+                  eye_donor, mouth_donor, config["eye_box"], config["mouth_box"])
     report = {
         "expression": config["slug"],
         "source": config["source"],
@@ -249,6 +324,8 @@ def build(config: dict) -> dict:
         "source_mouth_state": config["source_mouth_state"],
         "dimensions": [w, h],
         "source_alpha_preserved_for_all_states": True,
+        "mask_within_donor_crop": True,
+        "visual_quality_status": "UNREVIEWED — inspect each 20x donor/source/result/mask comparison and GIF",
         "eye_mask_pixels": int(np.count_nonzero(eye)),
         "mouth_mask_pixels": int(np.count_nonzero(mouth)),
         "eye_donor_color": eye_color,
