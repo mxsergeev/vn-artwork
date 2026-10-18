@@ -33,7 +33,7 @@ for slug in ALL_EXPRESSIONS:
                 reference_alpha = alpha.copy()
             else:
                 assert np.array_equal(alpha, reference_alpha), f"{slug}/{state}: alpha differs from idle"
-print("PASS all eight expressions: four full-size RGBA states with identical per-expression alpha")
+print("INTEGRITY PASS all eight expressions: four full-size RGBA states with identical per-expression alpha")
 
 for slug, (experiment, source_name) in EXPRESSIONS.items():
     source = np.asarray(Image.open(ROOT / "static/sprites" / f"{source_name}.png").convert("RGBA"))
@@ -42,6 +42,13 @@ for slug, (experiment, source_name) in EXPRESSIONS.items():
     report = json.loads((out / "QA.json").read_text(encoding="utf-8"))
     assert report["source_alpha_preserved_for_all_states"] is True
     assert all(v["outside_feature_mask_pixels"] == 0 for v in report["states"].values())
+    # The outside-mask assertion only verifies compositing integrity. It cannot
+    # prove that all eyelashes/eyelids/mouth pixels were included in the masks.
+    assert report["mask_within_donor_crop"] is True
+    assert report["visual_quality_status"].startswith("UNREVIEWED")
+    for feature in ("left_eye", "right_eye", "mouth"):
+        with Image.open(out / f"{feature}_20x_review.png") as review:
+            review.verify()
     for state in STATES:
         src = out / f"{state}.png"
         dst = published / f"{state}.png"
@@ -62,12 +69,12 @@ for slug, (experiment, source_name) in EXPRESSIONS.items():
             for frame_no in range(gif.n_frames):
                 gif.seek(frame_no)
                 gif.convert("RGB")
-    print(f"PASS {slug}: 4 exact PNG copies, source alpha, 3 readable GIFs")
+    print(f"INTEGRITY PASS {slug}: 4 exact PNG copies, source alpha, 3 readable GIFs and 20x review images")
 
 preview = ROOT / "static/animation/preview.jpg"
 with Image.open(preview) as image:
     assert image.format == "JPEG" and image.size == (1280, 690)
-print("PASS eight-expression index preview")
+print("INTEGRITY PASS eight-expression index preview")
 
 for slug in ("neutral", "happy", "shocked"):
     folder = ROOT / "static/animation" / slug
@@ -78,7 +85,7 @@ for slug in ("neutral", "happy", "shocked"):
             for frame_no in range(gif.n_frames):
                 gif.seek(frame_no)
                 gif.convert("RGB")
-    print(f"PASS {slug}: 3 native-resolution GIFs")
+    print(f"INTEGRITY PASS {slug}: 3 native-resolution GIFs")
 
 all_expressions = ROOT / "static/animation/all_expressions.gif"
 with Image.open(all_expressions) as gif:
@@ -87,4 +94,5 @@ with Image.open(all_expressions) as gif:
     for frame_no in range(gif.n_frames):
         gif.seek(frame_no)
         gif.convert("RGB")
-print("PASS all-expression montage GIF")
+print("INTEGRITY PASS all-expression montage GIF")
+print("VISUAL QUALITY NOT CERTIFIED: inspect each donor/source/mask/result 20x comparison and all PNG/GIF frames.")
